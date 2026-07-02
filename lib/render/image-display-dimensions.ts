@@ -17,8 +17,8 @@ export function toPhysicalImageDimensions(
 ): { width?: number; height?: number } {
 	const ratio =
 		typeof pixelRatio === "number" &&
-			Number.isFinite(pixelRatio) &&
-			pixelRatio > 0
+		Number.isFinite(pixelRatio) &&
+		pixelRatio > 0
 			? pixelRatio
 			: 1;
 

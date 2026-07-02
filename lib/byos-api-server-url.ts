@@ -11,7 +11,7 @@ const getConfiguredBaseUrl = (): string | null => {
 		process.env.NEXT_PUBLIC_BASE_URL,
 		process.env.BETTER_AUTH_URL,
 		process.env.VERCEL_PROJECT_PRODUCTION_URL &&
-		`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+			`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
 		process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
 	];
 

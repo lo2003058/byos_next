@@ -112,14 +112,17 @@ function MetaPair({
 	);
 }
 
-type HealthItem = {
-	id: string;
+type HealthChipProps = {
 	icon: React.ReactNode;
 	text: string;
 	label: string;
 };
 
-function HealthChip({ icon, text, label }: HealthItem) {
+type HealthItem = HealthChipProps & {
+	id: string;
+};
+
+function HealthChip({ icon, text, label }: HealthChipProps) {
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>

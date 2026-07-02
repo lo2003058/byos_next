@@ -511,9 +511,9 @@ export function AppSidebar({
 								</div>
 								{deviceApiServerUrl.needsManualLanIp && (
 									<p className="mt-2 text-xs text-muted-foreground">
-										We couldn&apos;t detect your LAN IP automatically. Do not use{" "}
-										<strong>localhost</strong> — find your computer&apos;s IP on
-										the same WiFi network (for example{" "}
+										We couldn&apos;t detect your LAN IP automatically. Do not
+										use <strong>localhost</strong> — find your computer&apos;s
+										IP on the same WiFi network (for example{" "}
 										<code className="font-mono">192.168.1.42</code>) and replace{" "}
 										<code className="font-mono">[your-ip]</code>.
 									</p>

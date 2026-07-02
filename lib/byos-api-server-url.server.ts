@@ -28,11 +28,7 @@ export const getLocalLanIPv4 = (): string | null => {
 		}
 	}
 
-	return (
-		candidates.find((ip) => isPrivateIPv4(ip)) ??
-		candidates[0] ??
-		null
-	);
+	return candidates.find((ip) => isPrivateIPv4(ip)) ?? candidates[0] ?? null;
 };
 
 export const resolveByosApiServerUrlForDevice = (

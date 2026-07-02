@@ -45,7 +45,7 @@ export type PreparedDeviceImage = {
 const RAW_BASE64_IMAGE_PREFIX = /^(?:iVBORw0KGgo|\/9j\/|R0lGOD)/;
 
 function parseDataUrl(src: string): Buffer | null {
-	const match = src.match(/^data:([^;,]+)?(;base64)?,(.*)$/s);
+	const match = src.match(/^data:([^;,]+)?(;base64)?,([\s\S]*)$/);
 	if (!match) return null;
 	const [, , base64Flag, payload = ""] = match;
 	return base64Flag
