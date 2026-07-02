@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback } from "react";
 import { fetchDeviceSystemLogs } from "@/app/actions/system";
 import SystemLogsViewer from "@/components/system-logs/system-logs-viewer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

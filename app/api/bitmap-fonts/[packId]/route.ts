@@ -3,6 +3,17 @@ import { join } from "node:path";
 import { connection } from "next/server";
 import { BUILT_IN_BITMAP_PACKS } from "@/lib/font-sources";
 
+const BITMAP_FONT_ROOT = join(process.cwd(), "components", "bitmap-font");
+const PACK_PATH_PREFIX = "components/bitmap-font/";
+
+function resolvePackDiskPath(packPath: string): string {
+	if (!packPath.startsWith(PACK_PATH_PREFIX)) {
+		throw new Error(`Unexpected bitmap font pack path: ${packPath}`);
+	}
+
+	return join(BITMAP_FONT_ROOT, packPath.slice(PACK_PATH_PREFIX.length));
+}
+
 export async function GET(
 	_request: Request,
 	{ params }: { params: Promise<{ packId: string }> },
@@ -17,7 +28,7 @@ export async function GET(
 	}
 
 	try {
-		const absolutePath = join(process.cwd(), pack.packPath);
+		const absolutePath = resolvePackDiskPath(pack.packPath);
 		const json = readFileSync(absolutePath, "utf8");
 
 		return new Response(json, {
