@@ -1,40 +1,37 @@
-const stripTrailingSlash = (url: string): string => url.replace(/\/+$/, "");
-
-export const formatByosApiServerUrlForDevice = (
-	url: string,
-): {
+export type DeviceApiServerUrlInfo = {
 	displayUrl: string;
-	usesLocalhost: boolean;
-} => {
-	try {
-		const parsed = new URL(url);
-		const usesLocalhost =
-			parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
-
-		if (usesLocalhost) {
-			const port = parsed.port || "3000";
-			return {
-				displayUrl: `http://[your-ip]:${port}`,
-				usesLocalhost: true,
-			};
-		}
-
-		return {
-			displayUrl: stripTrailingSlash(url),
-			usesLocalhost: false,
-		};
-	} catch {
-		return {
-			displayUrl: stripTrailingSlash(url),
-			usesLocalhost: false,
-		};
-	}
+	canCopy: boolean;
+	needsManualLanIp: boolean;
 };
 
+const stripTrailingSlash = (url: string): string => url.replace(/\/+$/, "");
+
+const getConfiguredBaseUrl = (): string | null => {
+	const candidates: Array<string | undefined> = [
+		process.env.NEXT_PUBLIC_BASE_URL,
+		process.env.BETTER_AUTH_URL,
+		process.env.VERCEL_PROJECT_PRODUCTION_URL &&
+		`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+		process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
+	];
+
+	for (const candidate of candidates) {
+		const raw = candidate?.trim();
+		if (raw && URL.canParse(raw)) {
+			return stripTrailingSlash(raw);
+		}
+	}
+
+	return null;
+};
+
+export const isLocalhostHostname = (hostname: string): boolean =>
+	hostname === "localhost" || hostname === "127.0.0.1";
+
 export const getByosApiServerUrlFromEnv = (): string => {
-	const raw = process.env.NEXT_PUBLIC_BASE_URL?.trim();
-	if (raw) {
-		return stripTrailingSlash(raw);
+	const configured = getConfiguredBaseUrl();
+	if (configured) {
+		return configured;
 	}
 
 	const port = process.env.PORT?.trim() || "3000";
@@ -44,9 +41,9 @@ export const getByosApiServerUrlFromEnv = (): string => {
 export const getByosApiServerUrlFromRequestHeaders = (
 	headerList: Headers,
 ): string => {
-	const fromEnv = process.env.NEXT_PUBLIC_BASE_URL?.trim();
-	if (fromEnv) {
-		return stripTrailingSlash(fromEnv);
+	const configured = getConfiguredBaseUrl();
+	if (configured) {
+		return configured;
 	}
 
 	const proto = headerList.get("x-forwarded-proto") ?? "http";

@@ -23,13 +23,16 @@ type PreparedImageEntry = {
 
 type FunctionComponent = (props: Record<string, unknown>) => React.ReactNode;
 
+const RAW_BASE64_IMAGE_PREFIX = /^(?:iVBORw0KGgo|\/9j\/|R0lGOD)/;
+
 function isSkippableImageSrc(src: string): boolean {
 	const trimmed = src.trim();
 	return (
 		trimmed.length === 0 ||
 		trimmed.startsWith("data:") ||
 		trimmed.startsWith("blob:") ||
-		trimmed.startsWith("#")
+		trimmed.startsWith("#") ||
+		RAW_BASE64_IMAGE_PREFIX.test(trimmed)
 	);
 }
 
@@ -102,6 +105,12 @@ async function rewriteSrcSet({
 	height?: number;
 	cache: Map<string, Promise<string>>;
 }): Promise<string> {
+	const trimmed = srcSet.trim();
+	// Data URLs contain a comma before the payload; naive splitting breaks them.
+	if (trimmed.startsWith("data:") || isSkippableImageSrc(trimmed)) {
+		return srcSet;
+	}
+
 	const candidates = srcSet
 		.split(",")
 		.map((candidate) => candidate.trim())
@@ -120,7 +129,7 @@ async function rewriteSrcSet({
 function isClassComponent(type: unknown): boolean {
 	return Boolean(
 		typeof type === "function" &&
-			(type as { prototype?: { render?: unknown } }).prototype?.render,
+		(type as { prototype?: { render?: unknown } }).prototype?.render,
 	);
 }
 

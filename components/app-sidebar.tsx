@@ -56,7 +56,7 @@ import {
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { formatByosApiServerUrlForDevice } from "@/lib/byos-api-server-url";
+import type { DeviceApiServerUrlInfo } from "@/lib/byos-api-server-url";
 import type { Device, RecipeSidebarItem } from "@/lib/types";
 import packageJson from "@/package.json";
 import { generateRandomApiKey, getDeviceStatus } from "@/utils/helpers";
@@ -73,7 +73,7 @@ interface AppSidebarProps {
 		role?: string;
 	} | null;
 	authEnabled: boolean;
-	byosApiServerUrl: string;
+	deviceApiServerUrl: DeviceApiServerUrlInfo;
 }
 
 export function AppSidebar({
@@ -83,7 +83,7 @@ export function AppSidebar({
 	currentPath,
 	user,
 	authEnabled,
-	byosApiServerUrl,
+	deviceApiServerUrl,
 }: AppSidebarProps) {
 	const router = useRouter();
 
@@ -94,8 +94,6 @@ export function AppSidebar({
 	const [newDeviceClaimCode, setNewDeviceClaimCode] = useState("");
 	const [newDeviceName, setNewDeviceName] = useState("");
 	const [addingDevice, setAddingDevice] = useState(false);
-	const deviceApiServerUrl = formatByosApiServerUrlForDevice(byosApiServerUrl);
-
 	const generateRandomDeviceApiKey = () => {
 		setNewDeviceApiKey(generateRandomApiKey());
 	};
@@ -494,7 +492,7 @@ export function AppSidebar({
 										variant="outline"
 										size="icon"
 										onClick={() => {
-											if (deviceApiServerUrl.usesLocalhost) {
+											if (!deviceApiServerUrl.canCopy) {
 												toast.message(
 													"Replace [your-ip] with your computer's LAN IP address.",
 												);
@@ -511,11 +509,13 @@ export function AppSidebar({
 										<Copy className="size-4" />
 									</Button>
 								</div>
-								{deviceApiServerUrl.usesLocalhost && (
+								{deviceApiServerUrl.needsManualLanIp && (
 									<p className="mt-2 text-xs text-muted-foreground">
-										Do not use <strong>localhost</strong> — use your
-										computer&apos;s LAN IP on the same WiFi network (for example{" "}
-										<code className="font-mono">192.168.1.42</code>).
+										We couldn&apos;t detect your LAN IP automatically. Do not use{" "}
+										<strong>localhost</strong> — find your computer&apos;s IP on
+										the same WiFi network (for example{" "}
+										<code className="font-mono">192.168.1.42</code>) and replace{" "}
+										<code className="font-mono">[your-ip]</code>.
 									</p>
 								)}
 								<ol className="mt-3 list-decimal space-y-1 pl-4" start={6}>

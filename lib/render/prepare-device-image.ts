@@ -42,13 +42,21 @@ export type PreparedDeviceImage = {
 	dataUrl: string;
 };
 
+const RAW_BASE64_IMAGE_PREFIX = /^(?:iVBORw0KGgo|\/9j\/|R0lGOD)/;
+
 function parseDataUrl(src: string): Buffer | null {
-	const match = src.match(/^data:([^;,]+)?(;base64)?,(.*)$/);
+	const match = src.match(/^data:([^;,]+)?(;base64)?,(.*)$/s);
 	if (!match) return null;
 	const [, , base64Flag, payload = ""] = match;
 	return base64Flag
 		? Buffer.from(payload, "base64")
 		: Buffer.from(decodeURIComponent(payload));
+}
+
+function parseRawBase64Image(src: string): Buffer | null {
+	const trimmed = src.trim();
+	if (!RAW_BASE64_IMAGE_PREFIX.test(trimmed)) return null;
+	return Buffer.from(trimmed, "base64");
 }
 
 async function loadImageSource(
@@ -59,6 +67,9 @@ async function loadImageSource(
 
 	const dataUrl = parseDataUrl(src);
 	if (dataUrl) return dataUrl;
+
+	const rawBase64 = parseRawBase64Image(src);
+	if (rawBase64) return rawBase64;
 
 	const response = await fetch(src, {
 		headers: {
