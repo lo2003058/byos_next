@@ -85,7 +85,7 @@ Multi-screen / multi-palette support means the default path must prioritize **te
 
 For **embedded photos only**, authors choose:
 - pre-render / swap assets per device (conditional classes, separate files), or
-- opt-in server dither via `prepareForDevice` (Bayer or white-noise — local, CPU-friendly; threshold quantize for 1-bit) — not Floyd–Steinberg on the full Takumi output.
+- opt-in server dither via `prepareForDevice` — quantize to the device palette plus exactly one of Bayer, white-noise, or threshold (never combined; local, CPU-friendly) — not Floyd–Steinberg on the full Takumi output.
 
 No duplicate palette commits from our side on #78. Rebase here after #78 merges; drop anything already landed in main.
 ```
@@ -141,7 +141,7 @@ Machine-readable lists saved at `/tmp/pr80-unique.diffstat` and `/tmp/pr80-commi
 |------|------|-------|
 | Bitmap fonts | `lib/bitmap-font/*`, `components/bitmap-font/*`, designer UI | Core PR value |
 | 1× rasterize | `rasterize.ts` (no scaleFactor) | Re-delete supersample after rebase |
-| Image algorithms | `dither-image.ts`, `utils/image-processing.ts` | Bayer/white-noise/FS; default → Bayer |
+| Image algorithms | `dither-image.ts`, `utils/image-processing.ts` | quantize + exactly one of Bayer/white-noise/FS; default → Bayer |
 | Recipe hook | `prepareForDevice`, `RecipeDeviceContext` | album, wikipedia |
 | Font curation | `docs/pixel-font.md`, script dedup, node-ts hooks | Review fixes |
 | BitmapText recipes | simple-text, weather, bitcoin-price, calendar, bitmap-patterns, album | Font integration |

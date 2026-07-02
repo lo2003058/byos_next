@@ -114,7 +114,11 @@ On compact screens, drop level 3 before shrinking level 1.
   or white after hard quantize.
 - On **color e-ink** (Spectra, ACeP, etc.), solid Tailwind colors are fine;
   photos should use `prepareForDevice` / `<DeviceImage>` with Bayer dither
-  (default) or author-chosen method. See `docs/trmnl/eink-palette-mapping.md`.
+  (default) or an author-chosen method — quantize plus exactly one of
+  `white-noise` / `bayer` / `floyd-steinberg`, never combined. See
+  `docs/trmnl/eink-palette-mapping.md`. Preparation dithers at the **physical**
+  screen pixel size (`width`/`height` × `screen.pixelRatio`), not the logical
+  layout size, so the pattern survives the final scale to physical pixels.
 - Use high contrast first. Subtle gray decoration often disappears on 1-bit
   devices.
 - Avoid thin lines below `2` logical pixels for important structure.

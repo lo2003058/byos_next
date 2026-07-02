@@ -81,16 +81,21 @@ export default async function RecipePreviewPage({
 			data={renderData}
 		/>
 	);
+	const targetWidth = screen.physicalWidth;
+	const targetHeight = screen.physicalHeight;
+	// Matches the scale wrapLogicalCanvasToTarget applies below, so dithered
+	// images land at the exact physical size the composite needs.
+	const pixelRatio =
+		screen.logicalWidth > 0 ? targetWidth / screen.logicalWidth : 1;
 	const imageDitherPolicy = resolveImageDitherPolicy({
 		renderSettings: definition.meta.renderSettings ?? null,
 		profile,
+		pixelRatio,
 	});
 	const renderedRecipe = await rewriteReactImagesForDevice(
 		recipe,
 		imageDitherPolicy,
 	);
-	const targetWidth = screen.physicalWidth;
-	const targetHeight = screen.physicalHeight;
 	const rendered = wrapLogicalCanvasToTarget(
 		renderedRecipe,
 		screen.logicalWidth,

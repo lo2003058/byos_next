@@ -66,14 +66,20 @@ export async function rasterize(
 		userId,
 		cookies,
 	} = options;
-	const imageDitherPolicy = resolveImageDitherPolicy({
-		renderSettings,
-		profile,
-	});
-
 	const target = { width: imageWidth, height: imageHeight };
 	const layoutWidth = options.layoutWidth ?? imageWidth;
 	const layoutHeight = options.layoutHeight ?? imageHeight;
+	// Matches the scale `wrapLogicalCanvasToTarget` applies below, so images
+	// dithered by the intercept land at the exact physical size the final
+	// composite needs — no additional resampling. Liquid/HTML rendering has
+	// no separate logical stage (layoutWidth defaults to imageWidth), so this
+	// naturally resolves to 1 there.
+	const pixelRatio = layoutWidth > 0 ? target.width / layoutWidth : 1;
+	const imageDitherPolicy = resolveImageDitherPolicy({
+		renderSettings,
+		profile,
+		pixelRatio,
+	});
 
 	let pngBuffer: Buffer;
 	try {

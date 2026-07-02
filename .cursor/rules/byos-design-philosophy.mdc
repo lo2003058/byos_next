@@ -40,10 +40,15 @@ Three content policies:
 
 1. **Text / icons / SVG** — hard snap on full frame; stay crisp.
 2. **UI fills** — Tailwind `dither-*` on 1-bit; solid color on color e-ink.
-3. **Photos** — author chooses method via `renderSettings.imageDither` or
-   `prepareForDevice` / `<DeviceImage>`; default **Bayer** (retro, local, fast).
-   Also: `white-noise`, `floyd-steinberg` (opt-in smooth gradients). Gray reduction
-   uses perceptual **Lab L\*** (`lib/render/luminance.ts`), not BT.601 average.
+3. **Photos** — reduce to the screen's color-bit depth / palette, combined
+ with **exactly one** dither method (never combined): default **Bayer**
+ (retro, ordered matrix, local and fast), or opt-in `white-noise`
+ (stochastic) or `floyd-steinberg` (error diffusion, smoother gradients).
+ Author picks via `renderSettings.imageDither` or `prepareForDevice` /
+ `<DeviceImage>`. Gray reduction uses perceptual **Lab L\***
+ (`lib/render/luminance.ts`), not BT.601 average. Dither at the **physical
+ screen pixel** size the image is composited at, not its logical layout
+ size or source resolution — dithering then upscaling blurs the pattern.
 
 - Tailwind grays (`dither-50` via `utils/dither-patterns.ts`): pipeline quantizes to device dither — no prep needed.
 - Photos/complex images: `prepareDeviceImage` + `prepareForDevice`; CPU-friendly methods, not opaque runtime magic.

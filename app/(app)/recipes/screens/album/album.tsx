@@ -10,6 +10,7 @@ import {
 	DitheringMethod,
 	prepareRecipeImageToDataUrl,
 } from "@/lib/render/dither-image";
+import { toPhysicalImageDimensions } from "@/lib/render/image-display-dimensions";
 import {
 	createScreenProfile,
 	type ScreenProfile,
@@ -146,9 +147,20 @@ export const definition: RecipeDefinition<
 			return data;
 		}
 
-		const preparedUrl = await prepareRecipeImageToDataUrl(imageUrl, ctx, {
-			method: DitheringMethod.BAYER,
-		});
+		// The album cover fills the whole logical canvas (`object-cover`), so
+		// its on-screen size is the full physical display, not `ctx.width` /
+		// `ctx.height` — spelled out explicitly here rather than relying on
+		// those already matching (they do today, but this documents intent).
+		const { width, height } = toPhysicalImageDimensions(
+			ctx.logicalWidth,
+			ctx.logicalHeight,
+			ctx.pixelRatio,
+		);
+		const preparedUrl = await prepareRecipeImageToDataUrl(
+			imageUrl,
+			{ ...ctx, width: width ?? ctx.width, height: height ?? ctx.height },
+			{ method: DitheringMethod.BAYER },
+		);
 		const isDithered = ctx.levels !== null || Boolean(ctx.colorPalette);
 
 		return isDithered

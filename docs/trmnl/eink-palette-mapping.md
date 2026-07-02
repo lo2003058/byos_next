@@ -19,11 +19,15 @@ or channel-depth reduction.
 | Kaleido / full-color mirror | 12-bit RGB444 | `color-12bit` |
 | LCD / true color | 24-bit | `color-24bit` |
 
-Image dithering routes per target:
+Image dithering always quantizes to the target's levels/colors, combined with
+at most one dither method (never Bayer + white-noise together):
 
-- **Grayscale palettes** — Bayer / white-noise / FS to N levels (Lab L\*).
-- **Discrete color palettes** — Bayer / FS / snap to palette RGB list.
-- **12/24-bit** — per-channel quantize (`quantizePngChannels`).
+- **Grayscale palettes** — quantize to N levels (Lab L\*), dithered with
+  `white-noise` | `bayer` | `floyd-steinberg`, or `snap` for no dither.
+- **Discrete color palettes** — quantize to the palette RGB list, dithered
+  with `bayer` | `floyd-steinberg`, or `snap`. `white-noise` on a color
+  palette currently falls back to `snap` (not yet implemented for color).
+- **12/24-bit** — per-channel quantize (`quantizePngChannels`), no dither.
 
 UI fills on 1-bit screens should use Tailwind `dither-*` patterns (see
 `responsive-example`) instead of solid Tailwind colors; color screens keep

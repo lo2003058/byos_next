@@ -16,6 +16,16 @@ export type ImageDitherPolicy =
 			mode: "on";
 			profile: DeviceProfile;
 			method: ImageDitherMethod;
+			/**
+			 * Logical-layout-px -> physical-screen-px scale for image
+			 * dimensions passed into the intercept. Must match the scale the
+			 * finished recipe is later composited at (see
+			 * `wrapLogicalCanvasToTarget`) so the dither pattern survives
+			 * 1:1 — dithering at logical size and then scaling up blurs it.
+			 * Defaults to `1` for pipelines that already render at physical
+			 * size (e.g. the Liquid/Puppeteer path).
+			 */
+			pixelRatio: number;
 	  };
 
 export const IMAGE_DITHER_OFF: ImageDitherPolicy = { mode: "off" };
@@ -34,9 +44,12 @@ export function hasDeviceImagePreparationTarget(
 export function resolveImageDitherPolicy({
 	renderSettings,
 	profile,
+	pixelRatio = 1,
 }: {
 	renderSettings: RecipeRenderSettings | null | undefined;
 	profile: DeviceProfile | null | undefined;
+	/** See `ImageDitherPolicy.pixelRatio`. */
+	pixelRatio?: number;
 }): ImageDitherPolicy {
 	const method = parseRecipeImageDitherSetting(renderSettings?.imageDither);
 	if (method === null) {
@@ -44,7 +57,7 @@ export function resolveImageDitherPolicy({
 	}
 
 	return hasDeviceImagePreparationTarget(profile)
-		? { mode: "on", profile, method }
+		? { mode: "on", profile, method, pixelRatio }
 		: IMAGE_DITHER_OFF;
 }
 

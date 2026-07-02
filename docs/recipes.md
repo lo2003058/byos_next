@@ -156,23 +156,27 @@ channel depth. It does not run Floyd-Steinberg over the whole screen, so text,
 icons, and flat fills stay crisp.
 
 Image-only preparation is enabled by default when the request includes a device
-profile with a reducible palette or channel depth. Authors choose the algorithm
-via `renderSettings.imageDither` (default **Bayer** ordered dither — retro
-crosshatch, local and fast):
+profile with a reducible palette or channel depth. It always **quantizes** the
+image to the screen's color-bit depth / palette, combined with **exactly one**
+dither method — Bayer and white-noise are never both applied. Authors choose
+the method via `renderSettings.imageDither` (default **Bayer** ordered dither —
+retro crosshatch, local and fast):
 
 ```ts
 renderSettings: {
-  imageDither: "bayer",        // default
-  // imageDither: "white-noise", // stochastic
-  // imageDither: "floyd-steinberg", // smooth gradients, slower
-  // imageDither: false,         // opt out
+  imageDither: "bayer",            // default: ordered matrix
+  // imageDither: "white-noise",   // stochastic
+  // imageDither: "floyd-steinberg", // error diffusion, smoother gradients, slower
+  // imageDither: "snap",          // quantize only, no dither
+  // imageDither: false,           // opt out entirely
 }
 ```
 
 Supported methods: `bayer`, `white-noise`, `floyd-steinberg`, `atkinson`,
 `threshold`, `snap`, `none`. Grayscale targets dither to palette gray levels
 using perceptual **Lab L\*** luminance; discrete color palettes dither to palette
-colors (including Spectra / ACeP families).
+colors (including Spectra / ACeP families) — note `white-noise` on a color
+palette currently falls back to `snap` (nearest-color, no dither).
 
 For explicit recipe data prep (album photos, Wikipedia thumbnails), use
 `prepareForDevice` with `prepareRecipeImageToDataUrl` or the `<DeviceImage>`
@@ -182,6 +186,14 @@ When active, the renderer rewrites plain `<img src="...">` and simple
 `<source srcSet="...">` image URLs to prepared PNG data URLs before the recipe
 is composed into the unified PNG. Existing `data:` URLs and CSS
 `background-image` values are not rewritten.
+
+Preparation always targets the **physical screen pixel** size the image is
+composited at — `<img width>` / `<img height>` (or inline CSS size) are read as
+logical layout px and scaled up by the device's `pixelRatio` before dithering,
+matching the scale the finished recipe is later composited to. Dithering at
+logical size and then upscaling would resample (blur) the pattern away, so the
+renderer also marks prepared `<img>` tags `image-rendering: pixelated` to keep
+the hard-quantized result crisp through that final composite.
 
 ## Responsive Design
 
