@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
 	ScreenFooter,
 	StatsGrid,
+	screenCanvasPadding,
 	screenMetric,
 } from "@/components/trmnl/screen-layout";
 import {
@@ -221,6 +222,8 @@ export default function WeatherYin({
 	};
 
 	const isHalfScreen = screenProfile.isHalfScreen;
+	// Same outer margin as ScreenCanvas so footers line up with other recipes.
+	const canvasPadding = screenCanvasPadding(screenProfile);
 	// Icons are static <svg> constants and Takumi needs explicit pixel sizes
 	// (percent sizes render nothing), so scale them from logical screen metrics.
 	const sizeIcon = (icon: ReactElement, base: number) => {
@@ -238,7 +241,8 @@ export default function WeatherYin({
 		>
 			<div className="flex flex-col w-full h-full bg-white text-black">
 				<div
-					className={`flex p-4 lg:p-8 2xl:p-12 sm:flex-row items-center justify-between ${isHalfScreen ? "flex-row" : "flex-col sm:flex-row"}`}
+					className={`flex sm:flex-row items-center justify-between ${isHalfScreen ? "flex-row" : "flex-col sm:flex-row"}`}
+					style={{ padding: canvasPadding }}
 				>
 					<div className="flex flex-col">
 						<h2
@@ -274,8 +278,12 @@ export default function WeatherYin({
 					</div>
 				</div>
 				<div
-					className="p-4 lg:p-8 2xl:p-12 pt-0 lg:pt-0 2xl:pt-0 flex flex-col flex-1"
-					style={{ gap: screenMetric(screenProfile, isHalfScreen ? 8 : 16) }}
+					className="flex flex-col flex-1"
+					style={{
+						padding: canvasPadding,
+						paddingTop: 0,
+						gap: screenMetric(screenProfile, isHalfScreen ? 8 : 16),
+					}}
 				>
 					{weatherStats.length > 0 ? (
 						<StatsGrid
