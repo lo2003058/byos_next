@@ -35,6 +35,40 @@ describe("TRMNL registry contracts", () => {
 		expect(invalid).toEqual([]);
 	});
 
+	it("keeps models whose upstream image_size_limit is null", () => {
+		const base = {
+			name: "amazon_kindle_2024",
+			label: "Amazon Kindle 2024",
+			width: 1448,
+			height: 1072,
+			colors: 256,
+			bit_depth: 8,
+			scale_factor: 1,
+			rotation: 0,
+			mime_type: "image/png",
+			offset_x: 0,
+			offset_y: 0,
+			palette_ids: ["gray-256"],
+		};
+
+		const models = parseRegistryList("models", trmnlModelSchema, {
+			data: [
+				{ ...base, image_size_limit: null },
+				{ ...base, name: "with_limit", image_size_limit: 90000 },
+				{ ...base, name: "no_limit_key" },
+			],
+		});
+
+		expect(models.map((model) => model.name)).toEqual([
+			"amazon_kindle_2024",
+			"with_limit",
+			"no_limit_key",
+		]);
+		expect(models[0].image_size_limit).toBeUndefined();
+		expect(models[1].image_size_limit).toBe(90000);
+		expect(models[2].image_size_limit).toBeUndefined();
+	});
+
 	it("accepts every bundled palette snapshot entry", () => {
 		const invalid = loadSnapshot("palettes.json")
 			.map((palette) => ({
