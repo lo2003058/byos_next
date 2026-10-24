@@ -22,7 +22,7 @@ describe("planFooter", () => {
 			parts: {
 				left: "Oct 24",
 				center: "Yin's board",
-				right: "50%",
+				right: "50.00%",
 				batteryLevel: 50,
 				charging: false,
 			},

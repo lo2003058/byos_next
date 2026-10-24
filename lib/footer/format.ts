@@ -47,19 +47,19 @@ export function formatFooterDate(
 
 export type FooterBatteryState = { level: number; charging: boolean };
 
-/** Battery level as a whole-number percentage (same estimate as the dashboard) and a charging flag. */
+/** Battery level in percent, to two decimals like the dashboard, and a charging flag. */
 export function footerBatteryState(
 	voltage: number | null | undefined,
 ): FooterBatteryState | null {
 	if (voltage == null || !Number.isFinite(voltage)) return null;
 	const { batteryPercentage, isCharging } = estimateBatteryLife(voltage, 1);
 	if (isCharging) return { level: 100, charging: true };
-	return { level: Math.round(batteryPercentage), charging: false };
+	return { level: batteryPercentage, charging: false };
 }
 
 /**
  * Battery text next to the battery icon, using the same estimate as the
- * dashboard, rounded to a whole percent.
+ * dashboard, with two decimals.
  */
 export function formatFooterBattery(
 	voltage: number | null | undefined,
@@ -69,7 +69,7 @@ export function formatFooterBattery(
 	const state = footerBatteryState(voltage);
 	if (!state) return "";
 	if (format === "voltage") return `${(voltage as number).toFixed(2)}V`;
-	return state.charging ? "Charging" : `${state.level}%`;
+	return state.charging ? "Charging" : `${state.level.toFixed(2)}%`;
 }
 
 export type FooterParts = {

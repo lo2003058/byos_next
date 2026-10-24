@@ -105,7 +105,7 @@ settings fails.
 - The image URL carries `access_token` when the footer is on, because the
   server's own precache fetch sends no headers.
 - Battery is the same linear voltage estimate as the dashboard
-  (`estimateBatteryLife`), rounded to a whole percent. A calendar icon sits before
+  (`estimateBatteryLife`), shown with two decimals. A calendar icon sits before
   the date and a four-segment battery icon before the level.
 - Web previews (device edit, playlist) have no device identity, so they do not
   show the footer.
