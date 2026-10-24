@@ -292,8 +292,8 @@ export default function WeatherYin({
 					)}
 					<ScreenFooter
 						screen={screenProfile}
-						left={lastUpdated || location}
-						right={lastUpdated ? location : undefined}
+						left={location || lastUpdated}
+						right={location ? lastUpdated || undefined : undefined}
 						style={outlineFooterStyle()}
 					/>
 				</div>
