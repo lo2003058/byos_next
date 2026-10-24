@@ -95,11 +95,11 @@ describe("WeatherYin show flags", () => {
 			expect(footer()).not.toContain("wear a jumper");
 		});
 
-		it("puts the date on the left and the location on the right", () => {
+		it("puts the location on the left and the updated time on the right", () => {
 			const out = footer();
-			expect(out.indexOf("Oct 24, 14:00")).toBeGreaterThan(-1);
-			expect(out.lastIndexOf("Oct 24, 14:00")).toBeLessThan(
-				out.lastIndexOf("Toronto, Canada"),
+			expect(out.indexOf("Toronto, Canada")).toBeGreaterThan(-1);
+			expect(out.lastIndexOf("Toronto, Canada")).toBeLessThan(
+				out.lastIndexOf("Oct 24, 14:00"),
 			);
 		});
 
