@@ -1,0 +1,240 @@
+import { cloneElement, type ReactElement } from "react";
+import { z } from "zod";
+import {
+	ScreenFooter,
+	StatsGrid,
+	screenMetric,
+} from "@/components/trmnl/screen-layout";
+import {
+	DEFAULT_IMAGE_HEIGHT,
+	DEFAULT_IMAGE_WIDTH,
+} from "@/lib/recipes/constants";
+import type { RecipeDefinition } from "@/lib/recipes/types";
+import { outlineFooterStyle } from "@/lib/trmnl/outline-footer";
+import {
+	createScreenProfile,
+	type ScreenProfile,
+} from "@/lib/trmnl/screen-profile";
+import { PreSatori } from "@/utils/pre-satori";
+import getWeatherDataInternal from "../weather/getData";
+import {
+	CloudIcon,
+	FogIcon,
+	humidityIcon,
+	pressureIcon,
+	RainIcon,
+	SnowIcon,
+	SunIcon,
+	sunriseIcon,
+	sunsetIcon,
+	ThunderIcon,
+	tempDown,
+	tempIcon,
+	tempUp,
+	windIcon,
+} from "../weather/icons";
+
+export const paramsSchema = z.object({
+	location: z
+		.string()
+		.default("Toronto, Canada")
+		.describe("City or place name to fetch weather for")
+		.meta({ title: "Location", placeholder: "Toronto, Canada" }),
+	latitude: z
+		.number()
+		.default(0)
+		.describe(
+			"Optional exact latitude; when set with longitude, skips geocoding",
+		)
+		.meta({ title: "Latitude" }),
+	longitude: z
+		.number()
+		.default(0)
+		.describe(
+			"Optional exact longitude; when set with latitude, skips geocoding",
+		)
+		.meta({ title: "Longitude" }),
+});
+
+export const dataSchema = z.object({
+	temperature: z.string().default("Loading..."),
+	feelsLike: z.string().default("Loading..."),
+	humidity: z.string().default("Loading..."),
+	windSpeed: z.string().default("Loading..."),
+	description: z.string().default("Loading..."),
+	location: z.string().default("Loading..."),
+	lastUpdated: z.string().default("Loading..."),
+	highTemp: z.string().default("Loading..."),
+	lowTemp: z.string().default("Loading..."),
+	pressure: z.string().default("Loading..."),
+	sunset: z.string().default("Loading..."),
+	sunrise: z.string().default("Loading..."),
+	latitude: z.number().default(0),
+	longitude: z.number().default(0),
+	suggestion: z.string().default(""),
+});
+
+interface WeatherProps {
+	temperature?: string;
+	feelsLike?: string;
+	humidity?: string;
+	windSpeed?: string;
+	description?: string;
+	location?: string;
+	lastUpdated?: string;
+	highTemp?: string;
+	lowTemp?: string;
+	pressure?: string;
+	sunset?: string;
+	sunrise?: string;
+	latitude?: number;
+	longitude?: number;
+	suggestion?: string;
+	width?: number;
+	height?: number;
+	screen?: ScreenProfile;
+}
+
+export default function WeatherYin({
+	temperature = "Loading...",
+	feelsLike = "Loading...",
+	humidity = "Loading...",
+	windSpeed = "Loading...",
+	description = "Loading...",
+	location = "Loading...",
+	lastUpdated = "Loading...",
+	highTemp = "Loading...",
+	lowTemp = "Loading...",
+	pressure = "Loading...",
+	sunset = "Loading...",
+	sunrise = "Loading...",
+	suggestion = "",
+	width = DEFAULT_IMAGE_WIDTH,
+	height = DEFAULT_IMAGE_HEIGHT,
+	screen,
+}: WeatherProps) {
+	const screenProfile = screen ?? createScreenProfile({ width, height });
+	// Weather statistics
+	const weatherStats = [
+		{ label: "Feels Like", value: `${feelsLike}°C`, icon: tempIcon },
+		{ label: "Humidity", value: `${humidity}%`, icon: humidityIcon },
+		{ label: "Wind Speed", value: `${windSpeed} km/h`, icon: windIcon },
+		{ label: "Pressure", value: `${pressure} hPa`, icon: pressureIcon },
+		{ label: "Sunrise", value: `${sunrise}`, icon: sunriseIcon },
+		{ label: "Sunset", value: `${sunset}`, icon: sunsetIcon },
+	];
+
+	// Get weather icon based on description
+	const getWeatherIcon = (desc: string) => {
+		const lowerDesc = desc.toLowerCase();
+		if (lowerDesc.includes("rain") || lowerDesc.includes("drizzle"))
+			return RainIcon;
+		if (lowerDesc.includes("snow")) return SnowIcon;
+		if (lowerDesc.includes("cloud")) return CloudIcon;
+		if (lowerDesc.includes("clear") || lowerDesc.includes("sun"))
+			return SunIcon;
+		if (lowerDesc.includes("fog") || lowerDesc.includes("mist")) return FogIcon;
+		if (lowerDesc.includes("thunder")) return ThunderIcon;
+		return CloudIcon; // default
+	};
+
+	const isHalfScreen = screenProfile.isHalfScreen;
+	// Icons are static <svg> constants and Takumi needs explicit pixel sizes
+	// (percent sizes render nothing), so scale them from logical screen metrics.
+	const sizeIcon = (icon: ReactElement, base: number) => {
+		const px = screenMetric(screenProfile, base);
+		return cloneElement(
+			icon as ReactElement<{ width?: number; height?: number }>,
+			{ width: px, height: px },
+		);
+	};
+
+	return (
+		<PreSatori
+			width={screenProfile.logicalWidth}
+			height={screenProfile.logicalHeight}
+		>
+			<div className="flex flex-col w-full h-full bg-white text-black">
+				<div
+					className={`flex p-4 lg:p-8 2xl:p-12 sm:flex-row items-center justify-between ${isHalfScreen ? "flex-row" : "flex-col sm:flex-row"}`}
+				>
+					<h2
+						className={`font-inter leading-none ${isHalfScreen ? "text-8xl" : "text-9xl 2xl:text-[12rem]"}`}
+					>
+						{temperature}°C
+					</h2>
+					<div className="flex flex-col items-center justify-center">
+						<div className="flex items-center justify-center">
+							{sizeIcon(getWeatherIcon(description), 128)}
+						</div>
+						{!isHalfScreen && (
+							<div className="text-4xl lg:text-5xl 2xl:text-6xl mt-4 font-blockkie">
+								<div className="flex flex-row items-center gap-2">
+									{sizeIcon(tempUp, 40)} {highTemp}°C
+									{sizeIcon(tempDown, 40)} {lowTemp}°C
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+				<div
+					className="p-4 lg:p-8 2xl:p-12 pt-0 lg:pt-0 2xl:pt-0 flex flex-col flex-1"
+					style={{ gap: screenMetric(screenProfile, isHalfScreen ? 8 : 16) }}
+				>
+					<StatsGrid
+						screen={screenProfile}
+						stats={weatherStats.map((stat) => ({
+							label: stat.label,
+							value: stat.value,
+							icon: sizeIcon(stat.icon, 48),
+						}))}
+						columns={isHalfScreen ? 2 : 3}
+						fill
+					/>
+					<ScreenFooter
+						screen={screenProfile}
+						left={suggestion || location}
+						right={
+							location
+								? `${location}${lastUpdated ? ` · ${lastUpdated}` : ""}`
+								: lastUpdated
+						}
+						style={outlineFooterStyle()}
+					/>
+				</div>
+			</div>
+		</PreSatori>
+	);
+}
+
+export const definition: RecipeDefinition<
+	typeof paramsSchema,
+	typeof dataSchema
+> = {
+	meta: {
+		slug: "weather-yin",
+		title: "Weather (Outline)",
+		description:
+			"Fork variant of the weather screen without filled black areas: the footer is an outlined box. Defaults to Toronto.",
+		published: true,
+		tags: ["tailwind", "weather", "api", "live-data", "configurable"],
+		author: { name: "fork" },
+		category: "display-components",
+		version: "0.1.0",
+		createdAt: "2026-10-24T00:00:00Z",
+		updatedAt: "2026-10-24T00:00:00Z",
+	},
+	paramsSchema,
+	dataSchema,
+	getData: async (params) => {
+		const data = await getWeatherDataInternal({
+			location: params.location,
+			latitude: params.latitude,
+			longitude: params.longitude,
+		});
+		return data as z.infer<typeof dataSchema>;
+	},
+	Component: ({ width, height, screen, data }) => (
+		<WeatherYin {...data} width={width} height={height} screen={screen} />
+	),
+};
