@@ -2,6 +2,7 @@ import {
 	DEFAULT_DEVICE_TIMEZONE,
 	normalizeRefreshSchedule,
 } from "@/lib/device/defaults";
+import { normalizeFooterConfig } from "@/lib/footer/config";
 import { DeviceDisplayMode } from "@/lib/mixup/constants";
 import type { Device, TemperatureProfile } from "@/lib/types";
 
@@ -48,6 +49,9 @@ function normalizeTemperatureProfile(value: unknown): TemperatureProfile {
 }
 
 export function mapDeviceRow(row: DeviceRow): Device {
+	const footer = normalizeFooterConfig(
+		row as Parameters<typeof normalizeFooterConfig>[0],
+	);
 	return {
 		id: Number(row.id ?? 0),
 		name: stringValue(row.name),
@@ -83,6 +87,10 @@ export function mapDeviceRow(row: DeviceRow): Device {
 			typeof row.supports_temperature_profile === "boolean"
 				? row.supports_temperature_profile
 				: null,
+		global_footer_enabled: footer.enabled,
+		global_footer_text: footer.text,
+		global_footer_date_format: footer.dateFormat,
+		global_footer_battery_format: footer.batteryFormat,
 	};
 }
 

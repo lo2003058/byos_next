@@ -11,6 +11,7 @@ import DeviceView from "@/components/device/device-view";
 import DeviceLogsContainer from "@/components/device-logs/device-logs-container";
 import { Button } from "@/components/ui/button";
 import { UI_REFRESH_FALLBACK_SECONDS } from "@/lib/device/defaults";
+import { changedFooterFields } from "@/lib/footer/config";
 import {
 	getPlaylistScreens,
 	type PlaylistScreen,
@@ -188,7 +189,12 @@ export default function DeviceClientPage({
 				},
 			});
 		} else {
-			if (name === "model") {
+			if (name === "global_footer_enabled") {
+				setEditedDevice({
+					...editedDevice,
+					global_footer_enabled: value === "on",
+				});
+			} else if (name === "model") {
 				const model = trmnlModels.find((item) => item.name === value);
 				const nextPaletteId = model?.palette_ids[0] ?? null;
 				setEditedDevice({
@@ -307,6 +313,7 @@ export default function DeviceClientPage({
 				model: editedDevice.model,
 				palette_id: editedDevice.palette_id,
 				temperature_profile: editedDevice.temperature_profile,
+				...changedFooterFields(device, editedDevice),
 			});
 
 			if (result.success) {

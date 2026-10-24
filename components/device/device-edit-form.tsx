@@ -33,6 +33,13 @@ import {
 	DEFAULT_DEVICE_SCREEN,
 	UI_REFRESH_FALLBACK_SECONDS,
 } from "@/lib/device/defaults";
+import {
+	BATTERY_FORMAT_LABELS,
+	BATTERY_FORMATS,
+	DATE_FORMAT_LABELS,
+	DATE_FORMATS,
+	FOOTER_TEXT_MAX_LENGTH,
+} from "@/lib/footer/config";
 import { DeviceDisplayMode } from "@/lib/mixup/constants";
 import { getFirstPlaylistScreenId } from "@/lib/playlists/playlist-items";
 import {
@@ -517,6 +524,94 @@ export default function DeviceEditForm({
 										<ToggleGroupItem value="c">C</ToggleGroupItem>
 									</ToggleGroup>
 								</Field>
+							)}
+
+							<Field
+								label="Global footer"
+								hint="A strip under every screen: date on the left, your text in the middle, battery on the right."
+							>
+								<ToggleGroup
+									type="single"
+									value={editedDevice.global_footer_enabled ? "on" : "off"}
+									onValueChange={(value) => {
+										if (value) onSelectChange("global_footer_enabled", value);
+									}}
+									variant="outline"
+									className="grid w-fit grid-cols-2"
+								>
+									<ToggleGroupItem value="off">Off</ToggleGroupItem>
+									<ToggleGroupItem value="on">On</ToggleGroupItem>
+								</ToggleGroup>
+							</Field>
+
+							{editedDevice.global_footer_enabled && (
+								<>
+									<Field
+										label="Footer text"
+										htmlFor="global_footer_text"
+										hint={`Up to ${FOOTER_TEXT_MAX_LENGTH} characters.`}
+									>
+										<Input
+											id="global_footer_text"
+											name="global_footer_text"
+											maxLength={FOOTER_TEXT_MAX_LENGTH}
+											value={editedDevice.global_footer_text ?? ""}
+											onChange={onInputChange}
+										/>
+									</Field>
+									<Field
+										label="Footer date"
+										htmlFor="global_footer_date_format"
+									>
+										<Select
+											value={editedDevice.global_footer_date_format ?? "none"}
+											onValueChange={(value) =>
+												onSelectChange("global_footer_date_format", value)
+											}
+										>
+											<SelectTrigger
+												id="global_footer_date_format"
+												className="w-full"
+											>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{DATE_FORMATS.map((format) => (
+													<SelectItem key={format} value={format}>
+														{DATE_FORMAT_LABELS[format]}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</Field>
+									<Field
+										label="Footer battery"
+										htmlFor="global_footer_battery_format"
+									>
+										<Select
+											value={
+												editedDevice.global_footer_battery_format ?? "none"
+											}
+											onValueChange={(value) =>
+												onSelectChange("global_footer_battery_format", value)
+											}
+										>
+											<SelectTrigger
+												id="global_footer_battery_format"
+												className="w-full"
+											>
+												<SelectValue />
+											</SelectTrigger>
+											<SelectContent>
+												{BATTERY_FORMATS.map((format) => (
+													<SelectItem key={format} value={format}>
+														{BATTERY_FORMAT_LABELS[format]}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</Field>
+								</>
 							)}
 						</TabsContent>
 

@@ -62,6 +62,10 @@ function makeDevice(overrides: Partial<Device> = {}): Device {
 		sleep_end_time: null,
 		temperature_profile: "default",
 		supports_temperature_profile: null,
+		global_footer_enabled: false,
+		global_footer_text: "",
+		global_footer_date_format: "none",
+		global_footer_battery_format: "none",
 		...overrides,
 	};
 }

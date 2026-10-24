@@ -1,4 +1,7 @@
 import { createElement } from "react";
+import { composeWithFooter } from "@/lib/footer/compose";
+import type { FooterPlan } from "@/lib/footer/plan";
+import { renderFooterPng } from "@/lib/footer/render-footer";
 import {
 	type RenderDeviceImageResult,
 	renderDeviceImage,
@@ -122,6 +125,7 @@ export async function renderRecipeForDevice({
 	height,
 	userId,
 	cookies,
+	footer,
 }: {
 	slug: string;
 	profile: DeviceProfile;
@@ -129,6 +133,8 @@ export async function renderRecipeForDevice({
 	height?: number;
 	userId?: string | null;
 	cookies?: string;
+	/** Global footer strip to draw under the recipe; the recipe gets less height. */
+	footer?: FooterPlan | null;
 }): Promise<RenderDeviceImageResult | null> {
 	const renderProfile =
 		width !== undefined || height !== undefined
@@ -141,10 +147,12 @@ export async function renderRecipeForDevice({
 					},
 				}
 			: profile;
+	const deviceWidth = renderProfile.model.width;
+	const deviceHeight = renderProfile.model.height;
 	const renders = await renderRecipeToImage({
 		slug,
-		imageWidth: renderProfile.model.width,
-		imageHeight: renderProfile.model.height,
+		imageWidth: deviceWidth,
+		imageHeight: footer ? footer.contentHeight : deviceHeight,
 		userId,
 		cookies,
 		model: profile.model,
@@ -153,7 +161,20 @@ export async function renderRecipeForDevice({
 	});
 
 	if (!renders.png) return null;
-	return renderDeviceImage({ png: renders.png, profile: renderProfile });
+	const png = footer
+		? await composeWithFooter({
+				content: renders.png,
+				footer: await renderFooterPng(footer.parts, {
+					width: deviceWidth,
+					height: footer.footerHeight,
+					deviceHeight,
+				}),
+				width: deviceWidth,
+				height: deviceHeight,
+				footerHeight: footer.footerHeight,
+			})
+		: renders.png;
+	return renderDeviceImage({ png, profile: renderProfile });
 }
 
 async function buildLiquidHtml(

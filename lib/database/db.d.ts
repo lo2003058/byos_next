@@ -77,6 +77,10 @@ export interface Devices {
 	 * Grayscale level (0-255, where 0 is full color and 255 is full grayscale)
 	 */
 	grayscale: Generated<number | null>;
+	global_footer_battery_format: Generated<string>;
+	global_footer_date_format: Generated<string>;
+	global_footer_enabled: Generated<boolean>;
+	global_footer_text: Generated<string>;
 	id: Generated<Int8>;
 	last_refresh_duration: number | null;
 	last_update_time: Timestamp | null;

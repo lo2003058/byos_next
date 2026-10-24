@@ -79,6 +79,35 @@ Known gap: if an already-claimed device is factory-reset, it gets a new key and
 claim code, and claiming it again fails on the `devices.mac_address` UNIQUE
 constraint.
 
+### Mixup as a playlist frame
+
+A playlist frame stores a mixup in `playlist_items.screen_id` as `mixup/<id>`
+(no schema change). Helpers: `lib/playlists/screen-ref.ts`. `/api/display`
+builds the mixup image URL with the device `access_token`, and
+`/api/bitmap/mixup/[id]` accepts a device only for the mixup assigned to it or
+one that is an item of its own playlist (`lib/device/mixup-access.ts`).
+
+### Global footer
+
+Per-device strip under every screen: date left, fixed text in the middle,
+battery right. Off by default. Code: `lib/footer/*`, applied in
+`renderRecipeForDevice` and `/api/bitmap/mixup/[id]`; settings are in the
+device edit page, Content tab.
+
+Needs migration `0022_add_global_footer.sql` (four `devices` columns). Run it
+once on Supabase (SQL Editor, paste the file). Until then the code treats the
+columns as missing, so the footer is simply off; only saving the footer
+settings fails.
+
+- The strip is drawn by the server, so recipes render with less height (34px on
+  800x480). Recipes pick their layout from the size they are given.
+- The image URL carries `access_token` when the footer is on, because the
+  server's own precache fetch sends no headers.
+- Battery is a linear voltage estimate rounded to 5% so the strip rarely
+  changes (a changed pixel costs a partial refresh).
+- Web previews (device edit, playlist) have no device identity, so they do not
+  show the footer.
+
 ## Syncing with upstream
 
 ```bash
