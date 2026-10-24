@@ -1,6 +1,7 @@
 import { screenCanvasPadding } from "@/components/trmnl/screen-layout";
 import type { ScreenProfile } from "@/lib/trmnl/screen-profile";
 import type { FooterParts } from "./format";
+import { BatteryIcon, CalendarIcon } from "./icons";
 
 const BORDER = 2;
 
@@ -28,6 +29,8 @@ export function GlobalFooter({
 }) {
 	const side = screenCanvasPadding(screen);
 	const fontSize = Math.max(14, Math.round(height * 0.5));
+	const iconSize = Math.round(fontSize * 1.1);
+	const iconGap = Math.round(fontSize * 0.4);
 
 	return (
 		<div
@@ -49,14 +52,38 @@ export function GlobalFooter({
 				gap: Math.round(height * 0.3),
 			}}
 		>
-			<div style={{ ...cell, flex: 1, justifyContent: "flex-start" }}>
-				{parts.left}
+			<div
+				style={{
+					...cell,
+					flex: 1,
+					justifyContent: "flex-start",
+					alignItems: "center",
+					gap: iconGap,
+				}}
+			>
+				{parts.left ? <CalendarIcon size={iconSize} /> : null}
+				<div style={{ display: "flex" }}>{parts.left}</div>
 			</div>
 			<div style={{ ...cell, flex: "none", maxWidth: "50%" }}>
 				{parts.center}
 			</div>
-			<div style={{ ...cell, flex: 1, justifyContent: "flex-end" }}>
-				{parts.right}
+			<div
+				style={{
+					...cell,
+					flex: 1,
+					justifyContent: "flex-end",
+					alignItems: "center",
+					gap: iconGap,
+				}}
+			>
+				{parts.right && parts.batteryLevel !== null ? (
+					<BatteryIcon
+						size={iconSize}
+						level={parts.batteryLevel}
+						charging={parts.charging}
+					/>
+				) : null}
+				<div style={{ display: "flex" }}>{parts.right}</div>
 			</div>
 		</div>
 	);

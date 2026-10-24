@@ -35,7 +35,7 @@ import {
 } from "@/lib/device/defaults";
 import {
 	BATTERY_FORMAT_LABELS,
-	BATTERY_FORMATS,
+	BATTERY_FORMAT_OPTIONS,
 	DATE_FORMAT_LABELS,
 	DATE_FORMATS,
 	FOOTER_TEXT_MAX_LENGTH,
@@ -603,7 +603,7 @@ export default function DeviceEditForm({
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent>
-												{BATTERY_FORMATS.map((format) => (
+												{BATTERY_FORMAT_OPTIONS.map((format) => (
 													<SelectItem key={format} value={format}>
 														{BATTERY_FORMAT_LABELS[format]}
 													</SelectItem>

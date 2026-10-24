@@ -19,7 +19,13 @@ const ctx = {
 describe("planFooter", () => {
 	it("returns the strip size and parts when the footer is on", () => {
 		expect(planFooter(on, ctx)).toEqual({
-			parts: { left: "Oct 24", center: "Yin's board", right: "50%" },
+			parts: {
+				left: "Oct 24",
+				center: "Yin's board",
+				right: "50%",
+				batteryLevel: 50,
+				charging: false,
+			},
 			footerHeight: 34,
 			contentHeight: 446,
 		});
@@ -43,7 +49,13 @@ describe("planFooter", () => {
 			{ ...on, dateFormat: "none", batteryFormat: "none" },
 			ctx,
 		);
-		expect(plan?.parts).toEqual({ left: "", center: "Yin's board", right: "" });
+		expect(plan?.parts).toEqual({
+			left: "",
+			center: "Yin's board",
+			right: "",
+			batteryLevel: null,
+			charging: false,
+		});
 	});
 
 	it("skips the footer on a canvas too small to hold it", () => {

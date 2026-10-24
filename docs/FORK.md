@@ -94,8 +94,9 @@ battery right. Off by default. Code: `lib/footer/*`, applied in
 `renderRecipeForDevice` and `/api/bitmap/mixup/[id]`; settings are in the
 device edit page, Content tab.
 
-Needs migration `0022_add_global_footer.sql` (four `devices` columns). Run it
-once on Supabase (SQL Editor, paste the file). Until then the code treats the
+Needs migrations `0022_add_global_footer.sql` (four `devices` columns) and
+`0023_footer_date_format_dmy.sql` (allows the `24-Oct-2026` format; run it after
+0022). Run each once on Supabase (SQL Editor, paste the file). Until then the code treats the
 columns as missing, so the footer is simply off; only saving the footer
 settings fails.
 
@@ -104,7 +105,8 @@ settings fails.
 - The image URL carries `access_token` when the footer is on, because the
   server's own precache fetch sends no headers.
 - Battery is a linear voltage estimate rounded to 5% so the strip rarely
-  changes (a changed pixel costs a partial refresh).
+  changes (a changed pixel costs a partial refresh). A calendar icon sits before
+  the date and a four-segment battery icon before the level.
 - Web previews (device edit, playlist) have no device identity, so they do not
   show the footer.
 
