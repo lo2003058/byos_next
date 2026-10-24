@@ -2,7 +2,7 @@ import { cache } from "react";
 import { z } from "zod";
 import { getScreenParams } from "@/app/actions/screens-params";
 import { getReactRecipeDefinition } from "@/lib/recipes/registry";
-import type { AnyRecipeDefinition } from "@/lib/recipes/types";
+import type { AnyRecipeDefinition, RecipeContext } from "@/lib/recipes/types";
 import { zodObjectToParamDefinitions } from "@/lib/recipes/zod-form";
 
 /**
@@ -77,9 +77,10 @@ function safeParseDataWithDefaults(
 async function callGetDataWithTimeout(
 	getData: NonNullable<AnyRecipeDefinition["getData"]>,
 	params: Record<string, unknown>,
+	context: RecipeContext,
 ): Promise<unknown> {
 	return await Promise.race([
-		getData(params),
+		getData(params, context),
 		new Promise((_, reject) => {
 			setTimeout(
 				() => reject(new Error("Recipe data fetch timeout")),
@@ -93,6 +94,7 @@ export const resolveReactRecipe = cache(
 	async (
 		slug: string,
 		userId?: string,
+		deviceTimezone?: string,
 	): Promise<ResolvedReactRecipe | null> => {
 		const definition = await getReactRecipeDefinition(slug);
 		if (!definition) return null;
@@ -119,6 +121,7 @@ export const resolveReactRecipe = cache(
 				const fetched = await callGetDataWithTimeout(
 					definition.getData,
 					params,
+					{ deviceTimezone },
 				);
 				data = safeParseDataWithDefaults(definition.dataSchema, fetched);
 			} catch (error) {

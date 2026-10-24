@@ -43,6 +43,8 @@ type RenderRecipeArgs = {
 	palette?: TrmnlPalette | null;
 	paletteId?: string | null;
 	deviceProfile?: DeviceProfile | null;
+	/** IANA timezone of the device, for recipes that pick a location from it. */
+	deviceTimezone?: string | null;
 };
 
 /**
@@ -58,12 +60,17 @@ export async function renderRecipeToImage({
 	palette,
 	paletteId,
 	deviceProfile,
+	deviceTimezone,
 }: RenderRecipeArgs): Promise<RasterizeResults> {
 	const profile =
 		deviceProfile ?? (model ? { model, palette: palette ?? null } : null);
 
 	// React path
-	const resolved = await resolveReactRecipe(slug, userId ?? undefined);
+	const resolved = await resolveReactRecipe(
+		slug,
+		userId ?? undefined,
+		deviceTimezone ?? undefined,
+	);
 	if (resolved) {
 		const { definition, params, data } = resolved;
 		const screen = createScreenProfile({
@@ -126,6 +133,7 @@ export async function renderRecipeForDevice({
 	userId,
 	cookies,
 	footer,
+	deviceTimezone,
 }: {
 	slug: string;
 	profile: DeviceProfile;
@@ -135,6 +143,7 @@ export async function renderRecipeForDevice({
 	cookies?: string;
 	/** Global footer strip to draw under the recipe; the recipe gets less height. */
 	footer?: FooterPlan | null;
+	deviceTimezone?: string | null;
 }): Promise<RenderDeviceImageResult | null> {
 	const renderProfile =
 		width !== undefined || height !== undefined
@@ -158,6 +167,7 @@ export async function renderRecipeForDevice({
 		model: profile.model,
 		palette: profile.palette,
 		paletteId: renderProfile.palette?.id ?? null,
+		deviceTimezone,
 	});
 
 	if (!renders.png) return null;

@@ -57,6 +57,12 @@ export type RecipeRenderProps = {
  *   pass both the user's saved params AND the data the component should
  *   render against, without flattening either.
  */
+/** Per-render facts a recipe may use when it fetches data. */
+export type RecipeContext = {
+	/** IANA timezone of the device being rendered for, when known. */
+	deviceTimezone?: string | null;
+};
+
 export type RecipeDefinition<
 	P extends z.ZodObject = z.ZodObject,
 	D extends z.ZodTypeAny = P,
@@ -64,7 +70,10 @@ export type RecipeDefinition<
 	meta: RecipeMeta;
 	paramsSchema: P;
 	dataSchema: D;
-	getData?: (params: z.infer<P>) => Promise<z.infer<D>>;
+	getData?: (
+		params: z.infer<P>,
+		context?: RecipeContext,
+	) => Promise<z.infer<D>>;
 	Component: ComponentType<
 		RecipeRenderProps & {
 			params: z.infer<P>;

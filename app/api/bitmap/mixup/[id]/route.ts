@@ -15,7 +15,7 @@ import { noStoreImageResponse } from "@/lib/device/no-store-response";
 import { parseRequestHeaders } from "@/lib/device/request-headers";
 import { composeWithFooter } from "@/lib/footer/compose";
 import { renderFooterPng } from "@/lib/footer/render-footer";
-import { resolveFooterPlan } from "@/lib/footer/resolve";
+import { resolveDeviceRenderContext } from "@/lib/footer/resolve";
 import { getLayoutById, type LayoutSlot } from "@/lib/mixup/constants";
 import {
 	DEFAULT_IMAGE_HEIGHT,
@@ -157,7 +157,7 @@ export async function GET(
 		}
 
 		// The global footer takes a strip off the bottom; slots fill what is left.
-		const footer = await resolveFooterPlan(accessToken, {
+		const { footer, timezone } = await resolveDeviceRenderContext(accessToken, {
 			width,
 			height,
 			now: Date.now(),
@@ -188,6 +188,7 @@ export async function GET(
 			profile,
 			userId,
 			cookieHeader || undefined,
+			timezone,
 		);
 		const withFooter = footer
 			? await composeWithFooter({
@@ -224,6 +225,7 @@ async function renderSlot(
 	profile: DeviceProfile,
 	userId: string,
 	cookies?: string,
+	deviceTimezone?: string | null,
 ): Promise<Buffer | null> {
 	try {
 		const renders = await renderRecipeToImage({
@@ -233,6 +235,7 @@ async function renderSlot(
 			deviceProfile: profile,
 			userId,
 			cookies,
+			deviceTimezone,
 		});
 		return renders.png;
 	} catch (error) {
@@ -255,6 +258,7 @@ async function renderMixupCompositePng(
 	profile: DeviceProfile,
 	userId: string,
 	cookies?: string,
+	deviceTimezone?: string | null,
 ): Promise<Buffer> {
 	// Render all slots in parallel
 	const slotRenders = await Promise.all(
@@ -270,6 +274,7 @@ async function renderMixupCompositePng(
 				profile,
 				userId,
 				cookies,
+				deviceTimezone,
 			);
 			return { slot, buffer };
 		}),

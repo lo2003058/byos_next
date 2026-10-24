@@ -9,7 +9,7 @@ import {
 	parseRequestHeaders,
 	resolveUserIdFromApiKey,
 } from "@/lib/device/request-headers";
-import { resolveFooterPlan } from "@/lib/footer/resolve";
+import { resolveDeviceRenderContext } from "@/lib/footer/resolve";
 import {
 	DEFAULT_IMAGE_HEIGHT,
 	DEFAULT_IMAGE_WIDTH,
@@ -77,7 +77,7 @@ export async function GET(
 		const oversized = rejectOversizedImageArea(imageWidth, imageHeight);
 		if (oversized) return oversized;
 
-		const footer = await resolveFooterPlan(deviceKey, {
+		const { footer, timezone } = await resolveDeviceRenderContext(deviceKey, {
 			width: imageWidth,
 			height: imageHeight,
 			now: Date.now(),
@@ -91,6 +91,7 @@ export async function GET(
 			userId,
 			cookies: cookieHeader || undefined,
 			footer,
+			deviceTimezone: timezone,
 		});
 
 		if (!image?.buffer.length) {
