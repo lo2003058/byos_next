@@ -44,11 +44,12 @@ describe("formatFooterDate", () => {
 });
 
 describe("formatFooterBattery", () => {
-	it("rounds the percentage to the nearest 5 so the strip rarely changes", () => {
+	it("rounds the percentage to a whole number", () => {
 		// 3.9V -> (3.9-3.6)/0.6 = 50%
 		expect(formatFooterBattery(3.9, "percent")).toBe("50%");
-		// 3.93V -> 55% exactly; 3.94V -> 56.67% -> 55%
-		expect(formatFooterBattery(3.94, "percent")).toBe("55%");
+		// 4.1V is 83.33% on the dashboard, so the footer shows 83%
+		expect(formatFooterBattery(4.1, "percent")).toBe("83%");
+		expect(formatFooterBattery(3.94, "percent")).toBe("57%");
 		// 4.2V -> 100%
 		expect(formatFooterBattery(4.2, "percent")).toBe("100%");
 	});
@@ -77,8 +78,9 @@ describe("formatFooterBattery", () => {
 });
 
 describe("footerBatteryState", () => {
-	it("gives a level rounded to 5 and no charging flag", () => {
+	it("gives a whole-number level and no charging flag", () => {
 		expect(footerBatteryState(3.9)).toEqual({ level: 50, charging: false });
+		expect(footerBatteryState(4.1)).toEqual({ level: 83, charging: false });
 		expect(footerBatteryState(4.2)).toEqual({ level: 100, charging: false });
 		expect(footerBatteryState(3.4)).toEqual({ level: 0, charging: false });
 	});
