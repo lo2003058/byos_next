@@ -241,17 +241,31 @@ export default function WeatherYin({
 				<div
 					className={`flex p-4 lg:p-8 2xl:p-12 sm:flex-row items-center justify-between ${isHalfScreen ? "flex-row" : "flex-col sm:flex-row"}`}
 				>
-					<h2
-						className={`font-inter leading-none ${isHalfScreen ? "text-8xl" : "text-9xl 2xl:text-[12rem]"}`}
-					>
-						{temperature}°C
-					</h2>
+					<div className="flex flex-col">
+						<h2
+							className={`font-inter leading-none ${isHalfScreen ? "text-8xl" : "text-9xl 2xl:text-[12rem]"}`}
+						>
+							{temperature}°C
+						</h2>
+						{isHalfScreen && show.showHighLow !== false && (
+							<div
+								data-testid="high-low"
+								className="flex flex-row items-center gap-2 mt-2 text-2xl font-inter"
+							>
+								{sizeIcon(tempUp, 28)} {highTemp}°{sizeIcon(tempDown, 28)}{" "}
+								{lowTemp}°
+							</div>
+						)}
+					</div>
 					<div className="flex flex-col items-center justify-center">
 						<div className="flex items-center justify-center">
 							{sizeIcon(getWeatherIcon(description), 128)}
 						</div>
 						{!isHalfScreen && show.showHighLow !== false && (
-							<div className="text-4xl lg:text-5xl 2xl:text-6xl mt-4 font-blockkie">
+							<div
+								data-testid="high-low"
+								className="text-4xl lg:text-5xl 2xl:text-6xl mt-4 font-blockkie"
+							>
 								<div className="flex flex-row items-center gap-2">
 									{sizeIcon(tempUp, 40)} {highTemp}°C
 									{sizeIcon(tempDown, 40)} {lowTemp}°C
