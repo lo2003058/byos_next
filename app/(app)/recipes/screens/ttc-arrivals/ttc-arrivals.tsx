@@ -81,6 +81,9 @@ type TtcArrivalsData = z.infer<typeof dataSchema>;
 
 const MAX_SECTIONS = 3;
 
+// A real bold cut (not synthesized from Inter Regular) keeps strokes crisp on 1-bit panels.
+const BOLD_FONT = "interBold, Inter, sans-serif";
+
 function minutesLabel(minutes: number): string {
 	return minutes < 1 ? "Now" : `${minutes}`;
 }
@@ -121,7 +124,8 @@ function SectionView({
 				style={{
 					display: "flex",
 					fontSize: screenFontSize(screen, dense ? 20 : 28, 16),
-					fontWeight: 700,
+					fontFamily: BOLD_FONT,
+					fontWeight: 400,
 					lineHeight: 1.1,
 					overflow: "hidden",
 					whiteSpace: "nowrap",
@@ -166,7 +170,8 @@ function SectionView({
 								color: arrival.express ? "#000" : "#fff",
 								border: `${Math.max(2, screenMetric(screen, 3))}px solid #000`,
 								fontSize: routeFont,
-								fontWeight: 700,
+								fontFamily: BOLD_FONT,
+								fontWeight: 400,
 							}}
 						>
 							{arrival.route}
@@ -178,6 +183,8 @@ function SectionView({
 								overflow: "hidden",
 								whiteSpace: "nowrap",
 								fontSize: destFont,
+								fontFamily: BOLD_FONT,
+								fontWeight: 400,
 							}}
 						>
 							{arrival.express
@@ -190,7 +197,8 @@ function SectionView({
 									display: "flex",
 									flex: "none",
 									fontSize: screenFontSize(screen, dense ? 22 : 26, 16),
-									fontWeight: 700,
+									fontFamily: BOLD_FONT,
+									fontWeight: 400,
 								}}
 							>
 								{arrival.arrivesAt}
@@ -204,7 +212,8 @@ function SectionView({
 								justifyContent: "flex-end",
 								alignItems: "baseline",
 								gap: screenMetric(screen, 6),
-								fontWeight: 700,
+								fontFamily: BOLD_FONT,
+								fontWeight: 400,
 							}}
 						>
 							<div style={{ display: "flex", fontSize: minutesFont }}>
@@ -215,6 +224,7 @@ function SectionView({
 									style={{
 										display: "flex",
 										fontSize: screenFontSize(screen, 18, 16),
+										fontFamily: "Inter, sans-serif",
 										fontWeight: 400,
 									}}
 								>
@@ -267,7 +277,8 @@ export default function TtcArrivals({
 								alignItems: "center",
 								justifyContent: "center",
 								fontSize: screenFontSize(screenProfile, 32, 18),
-								fontWeight: 700,
+								fontFamily: BOLD_FONT,
+								fontWeight: 400,
 							}}
 						>
 							Add a TTC stop code

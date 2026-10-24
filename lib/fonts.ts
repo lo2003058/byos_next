@@ -8,6 +8,8 @@ const fontPaths = {
 	blockKie: path.join(process.cwd(), "public", "fonts", "BlockKie.ttf"),
 	geneva9: path.join(process.cwd(), "public", "fonts", "geneva-9.ttf"),
 	inter: path.join(process.cwd(), "public", "fonts", "Inter_18pt-Regular.ttf"),
+	// Real bold cut: synthesized bold from the regular file blurs on 1-bit screens.
+	interBold: path.join(process.cwd(), "public", "fonts", "Inter-Bold.ttf"),
 };
 
 // System fonts configuration

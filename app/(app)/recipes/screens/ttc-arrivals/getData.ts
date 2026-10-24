@@ -32,19 +32,6 @@ const splitList = (value: string): string[] =>
 		.map((item) => item.trim())
 		.filter(Boolean);
 
-function formatTime(timezone: string): string {
-	try {
-		return new Intl.DateTimeFormat("en-CA", {
-			timeZone: timezone,
-			hour: "numeric",
-			minute: "2-digit",
-			hour12: true,
-		}).format(new Date());
-	} catch {
-		return "";
-	}
-}
-
 /**
  * Never throws: a device must always receive an image, so feed failures are
  * returned on the section and drawn on screen instead.
@@ -55,7 +42,7 @@ function formatTime(timezone: string): string {
 export default async function getData(
 	params: TtcArrivalsParams,
 ): Promise<TtcArrivalsData> {
-	const updatedAt = formatTime(params.timezone);
+	const updatedAt = formatClock(Date.now(), params.timezone);
 	const stopIds = splitList(params.stopIds);
 	const labels = splitList(params.labels);
 
