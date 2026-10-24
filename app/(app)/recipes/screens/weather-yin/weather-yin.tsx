@@ -253,7 +253,7 @@ export default function WeatherYin({
 		const isBanner = layout.kind === "banner";
 		const weatherIcon = sizeIcon(
 			getWeatherIcon(description),
-			isBanner ? 64 : 56,
+			isBanner ? 64 : 44,
 		);
 		const temperatureText = (
 			<div
@@ -261,7 +261,7 @@ export default function WeatherYin({
 				style={{
 					display: "flex",
 					fontFamily: "Inter, sans-serif",
-					fontSize: screenMetric(screenProfile, isBanner ? 84 : 88),
+					fontSize: screenMetric(screenProfile, isBanner ? 84 : 52),
 					lineHeight: 1,
 				}}
 			>
@@ -274,16 +274,16 @@ export default function WeatherYin({
 				stats={shownStats.map((stat) => ({
 					label: stat.label,
 					value: stat.value,
-					icon: sizeIcon(stat.icon, isBanner ? 40 : 36),
+					icon: sizeIcon(stat.icon, isBanner ? 40 : 30),
 				}))}
 				columns={
 					isBanner
 						? gridColumns(shownStats.length, false)
-						: Math.max(1, shownStats.length)
+						: Math.min(2, Math.max(1, shownStats.length))
 				}
 				align="center"
 				fill={isBanner}
-				rowHeight={isBanner ? undefined : screenMetric(screenProfile, 64)}
+				rowHeight={isBanner ? undefined : screenMetric(screenProfile, 74)}
 			/>
 		);
 		return (

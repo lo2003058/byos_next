@@ -17,8 +17,8 @@ describe("weatherLayout", () => {
 		expect(at(800, 240)).toMatchObject({ kind: "banner", maxStats: 8 });
 	});
 
-	it("uses the quarter layout for a small slot and keeps only the first stats", () => {
-		expect(at(400, 240)).toMatchObject({ kind: "quarter", maxStats: 2 });
+	it("uses the quarter layout for a small slot and keeps only the first four stats", () => {
+		expect(at(400, 240)).toMatchObject({ kind: "quarter", maxStats: 4 });
 	});
 
 	it("treats a tall narrow slot as a half, not a banner", () => {
