@@ -59,4 +59,22 @@ describe("WeatherYin show flags", () => {
 		expect(out).not.toContain("Feels Like");
 		expect(out).toContain("Toronto, Canada");
 	});
+
+	describe("on a half screen", () => {
+		const half = (show?: Record<string, boolean>) =>
+			renderToStaticMarkup(
+				<WeatherYin {...base} width={400} height={480} show={show} />,
+			);
+
+		it("still shows the high and low temperature", () => {
+			const out = half();
+			expect(out).toContain("14°");
+			expect(out).toContain("3°");
+			expect(out).toContain('data-testid="high-low"');
+		});
+
+		it("hides high and low when switched off", () => {
+			expect(half({ showHighLow: false })).not.toContain("high-low");
+		});
+	});
 });
