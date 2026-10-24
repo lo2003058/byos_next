@@ -15,6 +15,8 @@ export const reactRecipeLoaders: Record<string, RecipeModuleLoader> = {
 		import("../../app/(app)/recipes/screens/local-news/local-news"),
 	"not-found": () =>
 		import("../../app/(app)/recipes/screens/not-found/not-found"),
+	"public-holidays": () =>
+		import("../../app/(app)/recipes/screens/public-holidays/public-holidays"),
 	"responsive-example": () =>
 		import(
 			"../../app/(app)/recipes/screens/responsive-example/responsive-example"
@@ -40,6 +42,7 @@ export const reactRecipeSlugs = [
 	"hacker-news",
 	"local-news",
 	"not-found",
+	"public-holidays",
 	"responsive-example",
 	"simple-text",
 	"ttc-arrivals",
