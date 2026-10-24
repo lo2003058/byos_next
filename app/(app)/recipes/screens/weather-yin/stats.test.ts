@@ -31,6 +31,11 @@ describe("gridColumns", () => {
 		expect(gridColumns(6, true)).toBe(2);
 	});
 
+	it("uses 4 columns for 7 or 8 stats so they fit in two rows", () => {
+		expect(gridColumns(8, false)).toBe(4);
+		expect(gridColumns(7, false)).toBe(4);
+	});
+
 	it("uses 3 columns for 5 or 6 stats and 2 for 4 or fewer", () => {
 		expect(gridColumns(6, false)).toBe(3);
 		expect(gridColumns(5, false)).toBe(3);
