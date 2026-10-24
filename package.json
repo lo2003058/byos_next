@@ -12,7 +12,7 @@
 		"generate:types": "kysely-codegen --dialect postgres --include-pattern='public.*' --out-file lib/database/db.d.ts",
 		"generate:recipes": "node scripts/generate-recipes-index.mjs && biome format --write lib/recipes/screens.generated.ts",
 		"prebuild": "yarn generate:sql && yarn generate:recipes",
-		"dev": "yarn generate:sql && yarn generate:recipes && next dev --turbopack",
+		"dev": "yarn generate:sql && yarn generate:recipes && next dev --turbopack --port 8000",
 		"build": "next build",
 		"start": "next start",
 		"lint": "biome check ./app ./components ./lib ./utils ./hooks",
