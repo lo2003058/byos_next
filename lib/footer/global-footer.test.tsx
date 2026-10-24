@@ -47,4 +47,19 @@ describe("GlobalFooter", () => {
 		expect(out).toContain("height:34px");
 		expect(out).toContain("width:800px");
 	});
+
+	it("is a flush bottom bar with only a top border", () => {
+		const out = renderToStaticMarkup(
+			<GlobalFooter
+				parts={{ left: "a", center: "b", right: "c" }}
+				width={800}
+				height={34}
+				screen={screen}
+			/>,
+		);
+		expect(out).toContain("border-top:2px solid #000");
+		expect(out).not.toContain("border-radius");
+		expect(out).not.toContain("border:2px");
+		expect(out).not.toContain("border-bottom");
+	});
 });
