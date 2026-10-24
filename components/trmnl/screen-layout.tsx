@@ -35,6 +35,13 @@ export function screenFontSize(
 	return Math.max(minimum, screenMetric(screen, value));
 }
 
+/** Outer padding of `ScreenCanvas`, so custom layouts can line up with it. */
+export function screenCanvasPadding(screen: ScreenProfile): number {
+	return screen.isCompact
+		? screenMetric(screen, 12)
+		: screenMetric(screen, screen.isLarge ? 28 : 18);
+}
+
 export function ScreenCanvas({
 	screen,
 	children,
@@ -46,9 +53,7 @@ export function ScreenCanvas({
 	className?: string;
 	style?: CSSProperties;
 }) {
-	const padding = screen.isCompact
-		? screenMetric(screen, 12)
-		: screenMetric(screen, screen.isLarge ? 28 : 18);
+	const padding = screenCanvasPadding(screen);
 	const gap = screen.isCompact
 		? screenMetric(screen, 8)
 		: screenMetric(screen, screen.isLarge ? 16 : 10);
