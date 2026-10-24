@@ -236,7 +236,7 @@ export function StatsGrid({
 	rowHeight?: number;
 	labelSize?: number;
 	valueSize?: number;
-	/** `center` centers the icon and text inside each tile. */
+	/** `center` centers the icon+text group in each tile; the text stays left-aligned. */
 	align?: "start" | "center";
 }) {
 	const centered = align === "center";
@@ -311,8 +311,6 @@ export function StatsGrid({
 										display: "flex",
 										minWidth: 0,
 										flexDirection: "column",
-										alignItems: centered ? "center" : undefined,
-										textAlign: centered ? "center" : undefined,
 									}}
 								>
 									<div

@@ -25,14 +25,22 @@ describe("StatsGrid alignment", () => {
 			<StatsGrid screen={screen} stats={stats} columns={1} align={align} />,
 		);
 
-	it("centers tile content when asked", () => {
+	it("centers the icon+text group but keeps the text left-aligned", () => {
 		const out = render("center");
+		// The row holding icon and text is centered in the tile...
 		expect(out).toContain("justify-content:center");
-		expect(out).toContain("align-items:center");
-		expect(out).toContain("text-align:center");
+		// ...while the text itself is not centered inside the group.
+		expect(out).not.toContain("text-align:center");
 	});
 
-	it("keeps the left-aligned look by default", () => {
-		expect(render()).not.toContain("text-align:center");
+	it("lays the group out from the start by default", () => {
+		const row = (out: string) =>
+			out.match(/flex-direction:row;align-items:center;[^"]*/g) ?? [];
+		expect(
+			row(render("center")).some((s) => s.includes("justify-content:center")),
+		).toBe(true);
+		expect(
+			row(render()).some((s) => s.includes("justify-content:center")),
+		).toBe(false);
 	});
 });
