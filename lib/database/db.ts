@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect } from "kysely";
-import { Pool } from "pg";
 import type { DB } from "./db.d";
+import { getSharedPool, resolvePoolMax } from "./pool";
 
 // Ensure DATABASE_URL is available
 if (!process.env.DATABASE_URL) {
@@ -10,8 +10,9 @@ if (!process.env.DATABASE_URL) {
 // Create a new Kysely instance with Postgres dialect
 export const db = new Kysely<DB>({
 	dialect: new PostgresDialect({
-		pool: new Pool({
+		pool: getSharedPool("app", {
 			connectionString: process.env.DATABASE_URL,
+			max: resolvePoolMax(process.env.DB_POOL_MAX, 5),
 			ssl: process.env.DATABASE_URL?.includes("sslmode=disable")
 				? false
 				: process.env.NODE_ENV === "production"

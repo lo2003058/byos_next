@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { admin } from "better-auth/plugins";
-import { Pool } from "pg";
+import { getSharedPool, resolvePoolMax } from "@/lib/database/pool";
 import { sendEmail } from "@/lib/email";
 import { getAppBaseUrl } from "../utils";
 
@@ -17,8 +17,9 @@ function createAuth() {
 		return null;
 	}
 
-	const pool = new Pool({
+	const pool = getSharedPool("auth", {
 		connectionString: process.env.DATABASE_URL,
+		max: resolvePoolMax(process.env.AUTH_DB_POOL_MAX, 2),
 	});
 
 	async function promoteFirstRealUserToAdmin(userId: string) {
