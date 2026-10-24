@@ -122,7 +122,8 @@ override it. Web previews have no device, so they use the default city
 
 ### Fork-only recipes and writing recipes here
 
-Fork recipes: `ttc-arrivals`, `weather-yin`, `year-progress`, `public-holidays`.
+Fork recipes: `ttc-arrivals`, `weather-yin`, `year-progress` (year dot grid plus the
+next public holidays for a province, from Nager.Date).
 Each adapts to the four mixup slot shapes through `lib/trmnl/slot-kind.ts`
 (full, half, banner, quarter). `getData(params, { deviceTimezone })` gets the
 device timezone when the image is fetched by a device (not in web previews).

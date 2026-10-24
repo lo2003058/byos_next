@@ -7,6 +7,51 @@ jest.mock("@/utils/pre-satori", () => ({
 import { renderToStaticMarkup } from "react-dom/server";
 import YearProgress from "./year-progress";
 
+const holidays = [
+	{
+		date: "2026-12-25",
+		name: "Christmas Day",
+		weekday: "Fri",
+		daysUntil: 62,
+		longWeekend: true,
+	},
+	{
+		date: "2026-12-26",
+		name: "Boxing Day",
+		weekday: "Sat",
+		daysUntil: 63,
+		longWeekend: false,
+	},
+	{
+		date: "2027-01-01",
+		name: "New Year's Day",
+		weekday: "Fri",
+		daysUntil: 69,
+		longWeekend: true,
+	},
+	{
+		date: "2027-02-15",
+		name: "Family Day",
+		weekday: "Mon",
+		daysUntil: 114,
+		longWeekend: true,
+	},
+	{
+		date: "2027-03-26",
+		name: "Good Friday",
+		weekday: "Fri",
+		daysUntil: 153,
+		longWeekend: true,
+	},
+	{
+		date: "2027-05-24",
+		name: "Victoria Day",
+		weekday: "Mon",
+		daysUntil: 212,
+		longWeekend: true,
+	},
+];
+
 const data = {
 	year: 2026,
 	dayOfYear: 297,
@@ -14,12 +59,20 @@ const data = {
 	daysLeft: 68,
 	percent: 81.4,
 	jan1Weekday: 3,
+	showHolidays: true,
+	province: "ON",
+	provinceName: "Ontario",
+	holidays,
+	holidayError: "",
 };
 
-const at = (width: number, height: number) =>
+const at = (width: number, height: number, over = {}) =>
 	renderToStaticMarkup(
-		<YearProgress {...data} width={width} height={height} />,
+		<YearProgress {...data} {...over} width={width} height={height} />,
 	);
+
+const count = (html: string, pattern: string) =>
+	(html.match(new RegExp(pattern, "g")) ?? []).length;
 
 describe("YearProgress", () => {
 	it.each([
@@ -35,7 +88,7 @@ describe("YearProgress", () => {
 		expect(out).toContain("365");
 	});
 
-	it("draws a row for every month in the tall slots", () => {
+	it("draws the dot grid in the tall slots and a progress bar in the short ones", () => {
 		for (const [width, height] of [
 			[800, 446],
 			[400, 446],
@@ -45,13 +98,7 @@ describe("YearProgress", () => {
 				expect(out).toContain(`>${month}<`);
 			}
 		}
-	});
-
-	it("marks exactly one day as today in the month grid", () => {
-		expect((at(800, 446).match(/data-today="true"/g) ?? []).length).toBe(1);
-	});
-
-	it("uses a progress bar instead of the month grid in the short slots", () => {
+		expect(count(at(800, 446), 'data-today="true"')).toBe(1);
 		for (const [width, height] of [
 			[800, 206],
 			[400, 206],
@@ -62,7 +109,53 @@ describe("YearProgress", () => {
 		}
 	});
 
-	it("shows the year", () => {
-		expect(at(800, 446)).toContain("2026");
+	it("lists the next holidays beside the dots, fewer in smaller slots", () => {
+		const full = at(800, 446);
+		expect(full).toContain("Public holidays");
+		expect(full).toContain("Ontario");
+		expect(full).toContain(">Christmas Day<");
+		expect(full).toContain("in 62 days");
+		expect(count(full, "data-holiday")).toBe(5);
+		expect(count(at(400, 446), "data-holiday")).toBe(3);
+		expect(count(at(800, 206), "data-holiday")).toBe(3);
+		expect(count(at(400, 206), "data-holiday")).toBe(2);
+	});
+
+	it("marks long weekends only on Monday or Friday holidays", () => {
+		const full = at(800, 446);
+		// Of the first five, Boxing Day (Sat) is the only one without it.
+		expect(count(full, "Long weekend")).toBe(4);
+	});
+
+	it("words today and tomorrow", () => {
+		const out = at(800, 446, {
+			holidays: [
+				{ ...holidays[0], daysUntil: 0 },
+				{ ...holidays[1], daysUntil: 1 },
+			],
+		});
+		expect(out).toContain(">Today<");
+		expect(out).toContain(">Tomorrow<");
+	});
+
+	it("leaves out the holidays when switched off, keeping the dots", () => {
+		const out = at(800, 446, { showHolidays: false });
+		expect(out).not.toContain("data-holiday");
+		expect(out).not.toContain("Public holidays");
+		expect(out).toContain(">Jan<");
+	});
+
+	it("says so when the holiday data cannot be loaded, without hiding the progress", () => {
+		const out = at(800, 446, {
+			holidays: [],
+			holidayError: "Can't load holiday data",
+		});
+		expect(out).toContain("Can&#x27;t load holiday data");
+		expect(out).toContain(">81.4%<");
+		expect(out).not.toContain("data-holiday");
+	});
+
+	it("says so when there is nothing coming up", () => {
+		expect(at(800, 446, { holidays: [] })).toContain("No upcoming holidays");
 	});
 });
