@@ -18,7 +18,7 @@ export function weatherLayout(size: {
 }): WeatherLayout {
 	const narrow = size.logicalWidth <= NARROW_WIDTH;
 	const short = size.logicalHeight <= SHORT_HEIGHT;
-	if (narrow && short) return { kind: "quarter", maxStats: 2 };
+	if (narrow && short) return { kind: "quarter", maxStats: 4 };
 	if (short) return { kind: "banner", maxStats: 8 };
 	if (narrow) return { kind: "half", maxStats: 8 };
 	return { kind: "full", maxStats: 8 };

@@ -127,20 +127,27 @@ describe("WeatherYin show flags", () => {
 			expect(out).toContain("Toronto, Canada");
 		});
 
-		it("quarter shows only the first two stats and the footer", () => {
+		it("quarter shows only the first four stats and the footer", () => {
 			const out = at(400, 240);
-			expect(out).toContain(">High<");
-			expect(out).toContain(">Low<");
-			expect(out).not.toContain(">Feels Like<");
+			for (const label of ["High", "Low", "Feels Like", "Humidity"]) {
+				expect(out).toContain(`>${label}<`);
+			}
+			expect(out).not.toContain(">Wind Speed<");
 			expect(out).toContain("Toronto, Canada");
 		});
 
 		it("quarter falls back to the next enabled stats when high/low is off", () => {
 			const out = at(400, 240, { showHighLow: false });
 			expect(out).not.toContain(">High<");
-			expect(out).toContain(">Feels Like<");
-			expect(out).toContain(">Humidity<");
-			expect(out).not.toContain(">Pressure<");
+			for (const label of [
+				"Feels Like",
+				"Humidity",
+				"Wind Speed",
+				"Pressure",
+			]) {
+				expect(out).toContain(`>${label}<`);
+			}
+			expect(out).not.toContain(">Sunrise<");
 		});
 	});
 });
