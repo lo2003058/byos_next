@@ -26,7 +26,8 @@ jobs:
     name: Bump and Release
     runs-on: ubuntu-latest
     # allow tag pushes (head_commit == null) and skip if [skip release] on main
-    if: github.event.head_commit == null || !contains(github.event.head_commit.message, '[skip release]')
+    # Disabled in this fork: upstream-only release/publish pipeline (build job depends on this one)
+    if: false
     outputs:
       release_version: ${{ steps.bump.outputs.version || steps.version.outputs.version }}
 
@@ -36,8 +37,8 @@ jobs:
         with:
           fetch-depth: 0 # needed to read previous version and tags
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Enable corepack
+        run: corepack enable
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -80,7 +81,7 @@ jobs:
         id: bump
         if: steps.version.outputs.should_bump == 'true'
         run: |
-          pnpm version patch --no-git-tag-version
+          npm version patch --no-git-tag-version
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
@@ -95,7 +96,7 @@ jobs:
         env:
           NEW_VERSION: ${{ steps.bump.outputs.version }}
         run: |
-          git add package.json pnpm-lock.yaml || true
+          git add package.json yarn.lock || true
           git commit -m "chore(release): v${NEW_VERSION} [skip release]"
           git push origin HEAD
 

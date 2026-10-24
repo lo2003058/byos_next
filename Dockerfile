@@ -12,15 +12,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app
 
-RUN corepack enable pnpm && corepack prepare pnpm@11.8.0 --activate
+RUN corepack enable
 
 # Install dependencies only when needed
 FROM base AS deps
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json yarn.lock .yarnrc.yml ./
 
-RUN pnpm install --frozen-lockfile --prod=false \
-    && rm -rf ~/.npm ~/.pnpm-store /root/.cache
+RUN yarn install --immutable \
+    && rm -rf ~/.npm /root/.yarn /root/.cache
 
 # Build the application
 FROM base AS builder
@@ -28,7 +28,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN pnpm run build \
+RUN yarn build \
     && rm -rf node_modules/.cache
 
 # Production image - chromedp/headless-shell for minimal Chrome footprint

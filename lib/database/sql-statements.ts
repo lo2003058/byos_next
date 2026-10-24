@@ -1,5 +1,5 @@
 // This file is auto-generated from migration files.
-// Do not edit manually. Run 'pnpm generate:sql' to regenerate.
+// Do not edit manually. Run 'yarn generate:sql' to regenerate.
 
 export const SQL_STATEMENTS = {
 	"0000_initial_schema": {
