@@ -30,6 +30,32 @@ cloudflared tunnel run dev  # dev.iamyin.me -> http://localhost:8000
 - The Mac must stay awake, with both processes running, for the device to fetch
   screens.
 
+## Database role hardening
+
+Migration `0009_add_user_tenancy.sql` creates `byos_app` as
+`LOGIN PASSWORD 'byos_app_password'`, a password that is public in the repo.
+The app never logs in as `byos_app`: it connects as `postgres` and runs
+`SET ROLE byos_app` per query so RLS applies (`lib/database/scoped-db.ts`).
+The login password is therefore unused, but anyone who knows the database
+host and project ref could sign in with it.
+
+Run once on Supabase (SQL Editor), applied 2026-10-24:
+
+```sql
+ALTER ROLE byos_app NOLOGIN;
+```
+
+`SET ROLE byos_app` keeps working because it only needs membership in the role,
+not the right to log in. Check with:
+
+```sql
+SELECT rolname, rolcanlogin FROM pg_roles WHERE rolname = 'byos_app';  -- f
+```
+
+Re-running the migrations (or the in-app Initialize button) only creates the
+role when it is missing (`IF NOT EXISTS`), so this setting is not undone. If
+you ever recreate the database, run the `ALTER ROLE` again.
+
 ## Fork-only code changes
 
 ### `/api/setup` issues a key to unowned devices
