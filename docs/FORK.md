@@ -104,8 +104,8 @@ settings fails.
   800x480). Recipes pick their layout from the size they are given.
 - The image URL carries `access_token` when the footer is on, because the
   server's own precache fetch sends no headers.
-- Battery is a linear voltage estimate rounded to 5% so the strip rarely
-  changes (a changed pixel costs a partial refresh). A calendar icon sits before
+- Battery is the same linear voltage estimate as the dashboard
+  (`estimateBatteryLife`), rounded to a whole percent. A calendar icon sits before
   the date and a four-segment battery icon before the level.
 - Web previews (device edit, playlist) have no device identity, so they do not
   show the footer.

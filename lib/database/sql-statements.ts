@@ -1371,6 +1371,30 @@ COMMENT ON COLUMN devices.global_footer_text IS 'Fixed text shown in the middle 
 COMMENT ON COLUMN devices.global_footer_date_format IS 'Date format on the left of the global footer (none|short|weekday-short|iso).';
 COMMENT ON COLUMN devices.global_footer_battery_format IS 'Battery format on the right of the global footer (none|percent|icon-percent|voltage).';`,
 	},
+	"0023_footer_date_format_dmy": {
+		title: "Footer date format patterns",
+		description:
+			"Widens the global footer date format check so it accepts pattern values (YYYY-MM-DD, DD-MMM-YYYY, ...) as well as the values stored earlier (short, weekday-short, iso, dmy). Requires 0022_add_global_footer.sql. Safe to run more than once.",
+		sql: `ALTER TABLE devices
+DROP CONSTRAINT IF EXISTS devices_global_footer_date_format_check;
+
+ALTER TABLE devices
+ADD CONSTRAINT devices_global_footer_date_format_check
+CHECK (global_footer_date_format IN (
+  'none',
+  'YYYY-MM-DD',
+  'YYYY-DD-MM',
+  'DD-MM-YYYY',
+  'MM-DD-YYYY',
+  'DD-MMM-YYYY',
+  'MMM D',
+  'ddd, MMM D',
+  'short',
+  'weekday-short',
+  'iso',
+  'dmy'
+));`,
+	},
 	validate_schema: {
 		title: "Validate Database Schema",
 		description:

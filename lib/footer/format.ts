@@ -47,20 +47,19 @@ export function formatFooterDate(
 
 export type FooterBatteryState = { level: number; charging: boolean };
 
-/** Battery level rounded to 5 (so the bar rarely changes) and a charging flag. */
+/** Battery level as a whole-number percentage (same estimate as the dashboard) and a charging flag. */
 export function footerBatteryState(
 	voltage: number | null | undefined,
 ): FooterBatteryState | null {
 	if (voltage == null || !Number.isFinite(voltage)) return null;
 	const { batteryPercentage, isCharging } = estimateBatteryLife(voltage, 1);
 	if (isCharging) return { level: 100, charging: true };
-	return { level: Math.round(batteryPercentage / 5) * 5, charging: false };
+	return { level: Math.round(batteryPercentage), charging: false };
 }
 
 /**
- * Battery text next to the battery icon. Percentages are rounded to the
- * nearest 5 so the bar does not change on every wake-up (a changed pixel costs
- * a partial refresh).
+ * Battery text next to the battery icon, using the same estimate as the
+ * dashboard, rounded to a whole percent.
  */
 export function formatFooterBattery(
 	voltage: number | null | undefined,
