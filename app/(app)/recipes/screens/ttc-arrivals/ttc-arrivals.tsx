@@ -37,9 +37,16 @@ export const paramsSchema = z.object({
 		.default("")
 		.describe("Only show these routes, comma separated. Leave empty for all")
 		.meta({ title: "Routes", placeholder: "53, 953" }),
+	perRoute: z
+		.number()
+		.default(2)
+		.describe(
+			"Soonest arrivals kept per route, so a frequent route cannot hide an express",
+		)
+		.meta({ title: "Arrivals per route" }),
 	limit: z
 		.number()
-		.default(3)
+		.default(4)
 		.describe("Maximum number of arrivals shown per stop")
 		.meta({ title: "Arrivals per stop" }),
 	timezone: z
@@ -55,6 +62,8 @@ const arrivalSchema = z.object({
 	destination: z.string(),
 	minutes: z.number(),
 	seconds: z.number(),
+	express: z.boolean().default(false),
+	arrivesAt: z.string().default(""),
 });
 
 const sectionSchema = z.object({
@@ -153,8 +162,9 @@ function SectionView({
 								minWidth: screenMetric(screen, dense ? 78 : 96),
 								padding: `${screenMetric(screen, 1)}px ${screenMetric(screen, 8)}px`,
 								borderRadius: screenMetric(screen, 8),
-								backgroundColor: "#000",
-								color: "#fff",
+								backgroundColor: arrival.express ? "#fff" : "#000",
+								color: arrival.express ? "#000" : "#fff",
+								border: `${Math.max(2, screenMetric(screen, 3))}px solid #000`,
 								fontSize: routeFont,
 								fontWeight: 700,
 							}}
@@ -170,12 +180,28 @@ function SectionView({
 								fontSize: destFont,
 							}}
 						>
-							{arrival.destination}
+							{arrival.express
+								? `Express · ${arrival.destination}`
+								: arrival.destination}
 						</div>
+						{arrival.arrivesAt ? (
+							<div
+								style={{
+									display: "flex",
+									flex: "none",
+									fontSize: screenFontSize(screen, dense ? 22 : 26, 16),
+									fontWeight: 700,
+								}}
+							>
+								{arrival.arrivesAt}
+							</div>
+						) : null}
 						<div
 							style={{
 								display: "flex",
 								flex: "none",
+								minWidth: screenMetric(screen, dense ? 84 : 110),
+								justifyContent: "flex-end",
 								alignItems: "baseline",
 								gap: screenMetric(screen, 6),
 								fontWeight: 700,
