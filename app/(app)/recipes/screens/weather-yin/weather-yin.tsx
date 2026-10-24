@@ -168,6 +168,18 @@ export default function WeatherYin({
 	const weatherStats = selectStats(
 		[
 			{
+				key: "showHighLow",
+				label: "High",
+				value: `${highTemp}°C`,
+				icon: tempUp,
+			},
+			{
+				key: "showHighLow",
+				label: "Low",
+				value: `${lowTemp}°C`,
+				icon: tempDown,
+			},
+			{
 				key: "showFeelsLike",
 				label: "Feels Like",
 				value: `${feelsLike}°C`,
@@ -244,37 +256,15 @@ export default function WeatherYin({
 					className={`flex sm:flex-row items-center justify-between ${isHalfScreen ? "flex-row" : "flex-col sm:flex-row"}`}
 					style={{ padding: canvasPadding }}
 				>
-					<div className="flex flex-col">
-						<h2
-							className={`font-inter leading-none ${isHalfScreen ? "text-8xl" : "text-9xl 2xl:text-[12rem]"}`}
-						>
-							{temperature}°C
-						</h2>
-						{isHalfScreen && show.showHighLow !== false && (
-							<div
-								data-testid="high-low"
-								className="flex flex-row items-center gap-2 mt-2 text-2xl font-inter"
-							>
-								{sizeIcon(tempUp, 28)} {highTemp}°{sizeIcon(tempDown, 28)}{" "}
-								{lowTemp}°
-							</div>
-						)}
-					</div>
+					<h2
+						className={`font-inter leading-none ${isHalfScreen ? "text-8xl" : "text-9xl 2xl:text-[12rem]"}`}
+					>
+						{temperature}°C
+					</h2>
 					<div className="flex flex-col items-center justify-center">
 						<div className="flex items-center justify-center">
 							{sizeIcon(getWeatherIcon(description), 128)}
 						</div>
-						{!isHalfScreen && show.showHighLow !== false && (
-							<div
-								data-testid="high-low"
-								className="text-4xl lg:text-5xl 2xl:text-6xl mt-4 font-blockkie"
-							>
-								<div className="flex flex-row items-center gap-2">
-									{sizeIcon(tempUp, 40)} {highTemp}°C
-									{sizeIcon(tempDown, 40)} {lowTemp}°C
-								</div>
-							</div>
-						)}
 					</div>
 				</div>
 				<div
@@ -294,6 +284,7 @@ export default function WeatherYin({
 								icon: sizeIcon(stat.icon, 48),
 							}))}
 							columns={gridColumns(weatherStats.length, isHalfScreen)}
+							align="center"
 							fill
 						/>
 					) : (

@@ -226,6 +226,7 @@ export function StatsGrid({
 	rowHeight,
 	labelSize,
 	valueSize,
+	align = "start",
 }: {
 	screen: ScreenProfile;
 	stats: ScreenStat[];
@@ -235,7 +236,10 @@ export function StatsGrid({
 	rowHeight?: number;
 	labelSize?: number;
 	valueSize?: number;
+	/** `center` centers the icon and text inside each tile. */
+	align?: "start" | "center";
 }) {
+	const centered = align === "center";
 	const resolvedColumns =
 		columns ??
 		(screen.isHalfScreen || screen.orientation === "portrait" ? 2 : 4);
@@ -291,7 +295,8 @@ export function StatsGrid({
 								style={{
 									display: "flex",
 									flexDirection: stat.icon ? "row" : "column",
-									alignItems: stat.icon ? "center" : "flex-start",
+									alignItems: stat.icon || centered ? "center" : "flex-start",
+									justifyContent: centered ? "center" : undefined,
 									gap: stat.icon ? screenMetric(screen, 8) : 0,
 									minWidth: 0,
 								}}
@@ -306,6 +311,8 @@ export function StatsGrid({
 										display: "flex",
 										minWidth: 0,
 										flexDirection: "column",
+										alignItems: centered ? "center" : undefined,
+										textAlign: centered ? "center" : undefined,
 									}}
 								>
 									<div

@@ -29,6 +29,8 @@ describe("WeatherYin show flags", () => {
 	it("shows every stat by default", () => {
 		const out = html();
 		for (const label of [
+			"High",
+			"Low",
 			"Feels Like",
 			"Humidity",
 			"Wind Speed",
@@ -60,21 +62,26 @@ describe("WeatherYin show flags", () => {
 		expect(out).toContain("Toronto, Canada");
 	});
 
-	describe("on a half screen", () => {
-		const half = (show?: Record<string, boolean>) =>
-			renderToStaticMarkup(
-				<WeatherYin {...base} width={400} height={480} show={show} />,
-			);
-
-		it("still shows the high and low temperature", () => {
-			const out = half();
-			expect(out).toContain("14°");
-			expect(out).toContain("3°");
-			expect(out).toContain('data-testid="high-low"');
+	describe("high and low", () => {
+		it("are tiles in the grid, not a line next to the icon", () => {
+			const out = html();
+			expect(out).not.toContain("high-low");
+			expect(out).toContain(">High<");
+			expect(out).toContain(">Low<");
 		});
 
-		it("hides high and low when switched off", () => {
-			expect(half({ showHighLow: false })).not.toContain("high-low");
+		it("are hidden together when switched off", () => {
+			const out = html({ showHighLow: false });
+			expect(out).not.toContain(">High<");
+			expect(out).not.toContain(">Low<");
+		});
+
+		it("also appear on a half screen", () => {
+			const out = renderToStaticMarkup(
+				<WeatherYin {...base} width={400} height={480} />,
+			);
+			expect(out).toContain(">High<");
+			expect(out).toContain(">Low<");
 		});
 	});
 
