@@ -10,6 +10,7 @@ import { selectDisplayForDevice } from "@/lib/display/select";
 import { getLatestFirmware, isUpdateAvailable } from "@/lib/firmware";
 import { logError, logInfo } from "@/lib/logger";
 import { DeviceDisplayMode } from "@/lib/mixup/constants";
+import { playlistImageTarget } from "@/lib/playlists/screen-ref";
 import {
 	buildDeviceImageFilename,
 	buildDeviceImageUrl,
@@ -149,11 +150,16 @@ export async function GET(request: Request) {
 					dynamicRefreshRate = DEFAULT_REFRESH_RATE;
 				}
 				if (screenToDisplay !== "error") {
+					const target = playlistImageTarget(
+						screenToDisplay,
+						headers.apiKey,
+						selection.baseQueryParams,
+					);
 					imageUrl = buildDeviceImageUrl({
 						baseUrl,
-						imagePath: screenToDisplay,
+						imagePath: target.imagePath,
 						profile: selection.profile,
-						query: selection.baseQueryParams,
+						query: target.query,
 					});
 				}
 				break;
