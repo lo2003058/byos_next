@@ -44,18 +44,18 @@ describe("formatFooterDate", () => {
 });
 
 describe("formatFooterBattery", () => {
-	it("rounds the percentage to a whole number", () => {
+	it("shows the percentage with two decimals like the dashboard", () => {
 		// 3.9V -> (3.9-3.6)/0.6 = 50%
-		expect(formatFooterBattery(3.9, "percent")).toBe("50%");
+		expect(formatFooterBattery(3.9, "percent")).toBe("50.00%");
 		// 4.1V is 83.33% on the dashboard, so the footer shows 83%
-		expect(formatFooterBattery(4.1, "percent")).toBe("83%");
-		expect(formatFooterBattery(3.94, "percent")).toBe("57%");
+		expect(formatFooterBattery(4.1, "percent")).toBe("83.33%");
+		expect(formatFooterBattery(3.94, "percent")).toBe("56.67%");
 		// 4.2V -> 100%
-		expect(formatFooterBattery(4.2, "percent")).toBe("100%");
+		expect(formatFooterBattery(4.2, "percent")).toBe("100.00%");
 	});
 
 	it("clamps below the cutoff to 0%", () => {
-		expect(formatFooterBattery(3.4, "percent")).toBe("0%");
+		expect(formatFooterBattery(3.4, "percent")).toBe("0.00%");
 	});
 
 	it("shows a charging mark above the charging voltage", () => {
@@ -67,7 +67,7 @@ describe("formatFooterBattery", () => {
 	});
 
 	it("treats the old icon-percent value as plain percent (the icon is always drawn)", () => {
-		expect(formatFooterBattery(3.9, "icon-percent")).toBe("50%");
+		expect(formatFooterBattery(3.9, "icon-percent")).toBe("50.00%");
 	});
 
 	it("returns empty for none or an unknown voltage", () => {
@@ -78,9 +78,9 @@ describe("formatFooterBattery", () => {
 });
 
 describe("footerBatteryState", () => {
-	it("gives a whole-number level and no charging flag", () => {
+	it("gives the level to two decimals and no charging flag", () => {
 		expect(footerBatteryState(3.9)).toEqual({ level: 50, charging: false });
-		expect(footerBatteryState(4.1)).toEqual({ level: 83, charging: false });
+		expect(footerBatteryState(4.1)).toEqual({ level: 83.33, charging: false });
 		expect(footerBatteryState(4.2)).toEqual({ level: 100, charging: false });
 		expect(footerBatteryState(3.4)).toEqual({ level: 0, charging: false });
 	});
@@ -113,7 +113,7 @@ describe("buildFooterParts", () => {
 		).toEqual({
 			left: "Oct 24",
 			center: "Yin's board",
-			right: "50%",
+			right: "50.00%",
 			batteryLevel: 50,
 			charging: false,
 		});
