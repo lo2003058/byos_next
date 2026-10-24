@@ -10,6 +10,7 @@ import {
 	DEFAULT_IMAGE_WIDTH,
 } from "@/lib/recipes/constants";
 import type { RecipeDefinition } from "@/lib/recipes/types";
+import { to24Hour } from "@/lib/time/to-24-hour";
 import { outlineFooterStyle } from "@/lib/trmnl/outline-footer";
 import {
 	createScreenProfile,
@@ -215,7 +216,7 @@ export const definition: RecipeDefinition<
 		slug: "weather-yin",
 		title: "Weather (Outline)",
 		description:
-			"Fork variant of the weather screen without filled black areas: the footer is an outlined box. Defaults to Toronto.",
+			"Fork variant of the weather screen: outlined footer instead of a filled one, 24-hour times, Toronto by default.",
 		published: true,
 		tags: ["tailwind", "weather", "api", "live-data", "configurable"],
 		author: { name: "fork" },
@@ -232,7 +233,12 @@ export const definition: RecipeDefinition<
 			latitude: params.latitude,
 			longitude: params.longitude,
 		});
-		return data as z.infer<typeof dataSchema>;
+		return {
+			...data,
+			sunrise: to24Hour(data.sunrise),
+			sunset: to24Hour(data.sunset),
+			lastUpdated: to24Hour(data.lastUpdated),
+		} as z.infer<typeof dataSchema>;
 	},
 	Component: ({ width, height, screen, data }) => (
 		<WeatherYin {...data} width={width} height={height} screen={screen} />
