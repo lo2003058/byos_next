@@ -7,6 +7,10 @@ import {
 } from "@/lib/database/scoped-db";
 import { checkDbConnection } from "@/lib/database/utils";
 import { resolveDeviceProfileForRequest } from "@/lib/device/device-profile-request";
+import {
+	canDeviceRenderMixup,
+	type PlaylistHasScreen,
+} from "@/lib/device/mixup-access";
 import { noStoreImageResponse } from "@/lib/device/no-store-response";
 import { parseRequestHeaders } from "@/lib/device/request-headers";
 import { getLayoutById, type LayoutSlot } from "@/lib/mixup/constants";
@@ -21,6 +25,22 @@ import { stripImageExtension } from "@/lib/render/device-image-url";
 import { renderErrorImage } from "@/lib/render/error-image";
 import { parseImageRequest } from "@/lib/render/image-request";
 import type { DeviceProfile } from "@/lib/trmnl/device-profile";
+
+const playlistHasScreen: PlaylistHasScreen = async (
+	userId,
+	playlistId,
+	screenId,
+) => {
+	const item = await withExplicitUserScope(userId, (scopedDb) =>
+		scopedDb
+			.selectFrom("playlist_items")
+			.select("id")
+			.where("playlist_id", "=", playlistId)
+			.where("screen_id", "=", screenId)
+			.executeTakeFirst(),
+	);
+	return Boolean(item);
+};
 
 export async function GET(
 	req: NextRequest,
@@ -57,7 +77,8 @@ export async function GET(
 
 		// Two auth paths:
 		//  1. Device callback — `access_token` query param or `Access-Token` header
-		//     matches a device whose `mixup_id` is this one.
+		//     matches a device whose `mixup_id` is this one, or whose playlist has
+		//     this mixup as an item.
 		//  2. Browser/admin — signed-in user owns the mixup. Used by the UI
 		//     (mixup-list, device-view, device-edit-form) which can't add an
 		//     access_token to <img> srcs.
@@ -67,12 +88,15 @@ export async function GET(
 			const device = await withDeviceApiKey(accessToken, (scopedDb) =>
 				scopedDb
 					.selectFrom("devices")
-					.select(["user_id", "mixup_id", "model", "palette_id"])
+					.select(["user_id", "mixup_id", "playlist_id", "model", "palette_id"])
 					.where("api_key", "=", accessToken)
 					.executeTakeFirst(),
 			);
 
-			if (!device || device.mixup_id !== mixupId || !device.user_id) {
+			if (
+				!device?.user_id ||
+				!(await canDeviceRenderMixup(device, mixupId, playlistHasScreen))
+			) {
 				return new Response("Mixup not found", { status: 404 });
 			}
 			userId = device.user_id;

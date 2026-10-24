@@ -8,12 +8,13 @@ import { deletePlaylist, savePlaylistWithItems } from "@/app/actions/playlist";
 import { PlaylistBuilder } from "@/components/playlists/playlist-builder";
 import { PlaylistList } from "@/components/playlists/playlist-list";
 import { Button } from "@/components/ui/button";
-import type { Playlist, PlaylistItem, Recipe } from "@/lib/types";
+import type { ScreenOption } from "@/lib/playlists/screen-options";
+import type { Playlist, PlaylistItem } from "@/lib/types";
 
 interface PlaylistsClientPageProps {
 	initialPlaylists: Playlist[];
 	initialPlaylistItems: PlaylistItem[];
-	recipes: Recipe[];
+	recipes: ScreenOption[];
 }
 
 export default function PlaylistsClientPage({
