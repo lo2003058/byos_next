@@ -1,23 +1,28 @@
-import { fetchTtcPredictions, type TtcArrival } from "@/lib/ttc/predictions";
+import { fetchTtcSections, type TtcArrival } from "@/lib/ttc/predictions";
 
 export type TtcArrivalsParams = {
-	stopId: string;
+	stopIds: string;
+	labels: string;
 	routes: string;
 	limit: number;
 	timezone: string;
 };
 
-export type TtcArrivalsData = {
-	stopTitle: string;
+export type TtcArrivalsSection = {
+	label: string;
 	arrivals: TtcArrival[];
-	updatedAt: string;
 	error: string;
 };
 
-const splitRoutes = (routes: string): string[] =>
-	routes
+export type TtcArrivalsData = {
+	sections: TtcArrivalsSection[];
+	updatedAt: string;
+};
+
+const splitList = (value: string): string[] =>
+	value
 		.split(",")
-		.map((route) => route.trim())
+		.map((item) => item.trim())
 		.filter(Boolean);
 
 function formatTime(timezone: string): string {
@@ -35,25 +40,29 @@ function formatTime(timezone: string): string {
 
 /**
  * Never throws: a device must always receive an image, so feed failures are
- * returned as `error` and drawn on screen instead.
+ * returned on the section and drawn on screen instead.
+ *
+ * `labels` names the stops in order (e.g. "Eastbound, Westbound"); a stop
+ * without a label falls back to the stop title from the feed.
  */
 export default async function getData(
 	params: TtcArrivalsParams,
 ): Promise<TtcArrivalsData> {
 	const updatedAt = formatTime(params.timezone);
-	try {
-		const result = await fetchTtcPredictions(params.stopId, {
-			routes: splitRoutes(params.routes),
-			limit: params.limit,
-		});
-		return { ...result, updatedAt, error: "" };
-	} catch (error) {
-		console.error("[ttc-arrivals] failed to load predictions", error);
-		return {
-			stopTitle: "",
-			arrivals: [],
-			updatedAt,
-			error: error instanceof Error ? error.message : "Could not load TTC data",
-		};
-	}
+	const stopIds = splitList(params.stopIds);
+	const labels = splitList(params.labels);
+
+	const sections = await fetchTtcSections(stopIds, {
+		routes: splitList(params.routes),
+		limit: params.limit,
+	});
+
+	return {
+		updatedAt,
+		sections: sections.map((section, index) => ({
+			label: labels[index] || section.stopTitle || `Stop ${section.stopId}`,
+			arrivals: section.arrivals,
+			error: section.error,
+		})),
+	};
 }

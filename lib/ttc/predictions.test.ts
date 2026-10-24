@@ -1,5 +1,9 @@
 /// <reference types="jest" />
-import { fetchTtcPredictions, parseTtcPredictions } from "./predictions";
+import {
+	fetchTtcPredictions,
+	fetchTtcSections,
+	parseTtcPredictions,
+} from "./predictions";
 
 const prediction = (seconds: number, extra: Record<string, string> = {}) => ({
 	seconds: String(seconds),
@@ -181,5 +185,98 @@ describe("fetchTtcPredictions", () => {
 				fetchImpl: fetchImpl as unknown as typeof fetch,
 			}),
 		).rejects.toThrow("503");
+	});
+});
+
+describe("fetchTtcSections", () => {
+	const stopPayload = (
+		stopTitle: string,
+		routeTag: string,
+		seconds: number,
+	) => ({
+		predictions: {
+			routeTag,
+			routeTitle: `${routeTag}-Steeles`,
+			stopTitle,
+			direction: {
+				title: `East - ${routeTag} Steeles towards Staines`,
+				prediction: [{ seconds: String(seconds), minutes: "0" }],
+			},
+		},
+	});
+
+	const routedFetch =
+		(byStop: Record<string, () => Response>) =>
+		async (input: RequestInfo | URL) => {
+			const stop = new URL(String(input)).searchParams.get("stopId") ?? "";
+			const handler = byStop[stop];
+			if (!handler) throw new Error(`unexpected stop ${stop}`);
+			return handler();
+		};
+
+	it("returns one section per stop in the order given", async () => {
+		const fetchImpl = routedFetch({
+			"12816": () => Response.json(stopPayload("East Side", "53", 120)),
+			"8215": () => Response.json(stopPayload("West Side", "953", 240)),
+		});
+
+		const sections = await fetchTtcSections(["12816", "8215"], {
+			fetchImpl: fetchImpl as unknown as typeof fetch,
+		});
+
+		expect(sections.map((s) => [s.stopId, s.stopTitle, s.error])).toEqual([
+			["12816", "East Side", ""],
+			["8215", "West Side", ""],
+		]);
+		expect(sections[1].arrivals[0].route).toBe("953");
+	});
+
+	it("applies the route filter and per-stop limit to every stop", async () => {
+		const fetchImpl = routedFetch({
+			"1": () =>
+				Response.json({
+					predictions: [
+						stopPayload("A", "53", 60).predictions,
+						stopPayload("A", "353", 30).predictions,
+					],
+				}),
+		});
+
+		const [section] = await fetchTtcSections(["1"], {
+			routes: ["53", "953"],
+			limit: 1,
+			fetchImpl: fetchImpl as unknown as typeof fetch,
+		});
+
+		expect(section.arrivals.map((a) => a.route)).toEqual(["53"]);
+	});
+
+	it("keeps the other stops when one stop fails", async () => {
+		const fetchImpl = routedFetch({
+			"1": () => new Response("down", { status: 503 }),
+			"2": () => Response.json(stopPayload("Ok Stop", "53", 60)),
+		});
+
+		const sections = await fetchTtcSections(["1", "2"], {
+			fetchImpl: fetchImpl as unknown as typeof fetch,
+		});
+
+		expect(sections[0].error).toContain("503");
+		expect(sections[0].arrivals).toEqual([]);
+		expect(sections[1].error).toBe("");
+		expect(sections[1].arrivals).toHaveLength(1);
+	});
+
+	it("ignores blank and duplicate stop codes", async () => {
+		const fetchImpl = jest.fn(async () =>
+			Response.json(stopPayload("A", "53", 60)),
+		);
+
+		const sections = await fetchTtcSections(["8215", " ", "8215", ""], {
+			fetchImpl: fetchImpl as unknown as typeof fetch,
+		});
+
+		expect(sections).toHaveLength(1);
+		expect(fetchImpl).toHaveBeenCalledTimes(1);
 	});
 });
