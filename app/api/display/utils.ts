@@ -14,6 +14,7 @@ import {
 	type RequestHeaders,
 	resolveUserIdFromApiKey,
 } from "@/lib/device/request-headers";
+import { redactAccessToken } from "@/lib/footer/access-token-url";
 import { logError, logInfo, logWarn } from "@/lib/logger";
 import { logger } from "@/lib/recipes/logger";
 import {
@@ -51,13 +52,17 @@ export const precacheImageInBackground = (
 			}
 			logInfo("Image pre-cached successfully", {
 				source: "api/display",
-				metadata: { imageUrl, friendlyId },
+				metadata: { imageUrl: redactAccessToken(imageUrl), friendlyId },
 			});
 		})
 		.catch((error: Error) => {
 			logError("Failed to precache image", {
 				source: "api/display",
-				metadata: { imageUrl, error: error.message, friendlyId },
+				metadata: {
+					imageUrl: redactAccessToken(imageUrl),
+					error: redactAccessToken(error.message),
+					friendlyId,
+				},
 			});
 		});
 };
