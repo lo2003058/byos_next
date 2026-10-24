@@ -110,6 +110,16 @@ settings fails.
 - Web previews (device edit, playlist) have no device identity, so they do not
   show the footer.
 
+### weather-yin picks its place from the device timezone
+
+No free-text location (it was easy to mistype, and Open-Meteo's geocoder does
+not know districts such as North York). `/api/bitmap/*` resolves the device
+from `access_token`, passes its timezone to `getData(params, { deviceTimezone })`,
+and `weather-yin` uses the matching city from `lib/geo/timezone-location.ts`
+(one entry per timezone in `utils/helpers.ts`). Optional latitude and longitude
+override it. Web previews have no device, so they use the default city
+(Toronto).
+
 ## Syncing with upstream
 
 ```bash

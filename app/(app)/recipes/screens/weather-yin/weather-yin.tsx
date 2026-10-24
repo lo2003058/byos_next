@@ -36,29 +36,25 @@ import {
 	tempUp,
 	windIcon,
 } from "../weather/icons";
+import { resolveWeatherLocation } from "./location";
 import { weatherLayout } from "./size-layout";
 import { gridColumns, selectStats } from "./stats";
 
 export const paramsSchema = z.object({
-	location: z
-		.string()
-		.default("Toronto, Canada")
-		.describe("City or place name to fetch weather for")
-		.meta({ title: "Location", placeholder: "Toronto, Canada" }),
 	latitude: z
 		.number()
 		.default(0)
 		.describe(
-			"Optional exact latitude; when set with longitude, skips geocoding",
+			"Optional. Leave at 0 to use the city of the device's timezone. Set both latitude and longitude to override it",
 		)
-		.meta({ title: "Latitude" }),
+		.meta({ title: "Latitude (optional)" }),
 	longitude: z
 		.number()
 		.default(0)
 		.describe(
-			"Optional exact longitude; when set with latitude, skips geocoding",
+			"Optional. Leave at 0 to use the city of the device's timezone. Set both latitude and longitude to override it",
 		)
-		.meta({ title: "Longitude" }),
+		.meta({ title: "Longitude (optional)" }),
 	showHighLow: z
 		.boolean()
 		.default(true)
@@ -405,7 +401,7 @@ export const definition: RecipeDefinition<
 		slug: "weather-yin",
 		title: "Weather (Outline)",
 		description:
-			"Fork variant of the weather screen: outlined footer instead of a filled one, 24-hour times, Toronto by default.",
+			"Fork variant of the weather screen: outlined footer instead of a filled one, 24-hour times, and the place taken from the device's timezone.",
 		published: true,
 		tags: ["tailwind", "weather", "api", "live-data", "configurable"],
 		author: { name: "fork" },
@@ -416,11 +412,13 @@ export const definition: RecipeDefinition<
 	},
 	paramsSchema,
 	dataSchema,
-	getData: async (params) => {
+	getData: async (params, context) => {
+		// The place comes from the device's timezone unless coordinates are set.
+		const place = resolveWeatherLocation(params, context?.deviceTimezone);
 		const data = await getWeatherDataInternal({
-			location: params.location,
-			latitude: params.latitude,
-			longitude: params.longitude,
+			location: place.label,
+			latitude: place.latitude,
+			longitude: place.longitude,
 		});
 		return {
 			...data,
