@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 import {
 	buildFooterParts,
+	footerBatteryState,
 	formatFooterBattery,
 	formatFooterDate,
 } from "./format";
@@ -15,6 +16,14 @@ describe("formatFooterDate", () => {
 			"Sat, Oct 24",
 		);
 		expect(formatFooterDate(now, "America/Toronto", "iso")).toBe("2026-10-24");
+		expect(formatFooterDate(now, "America/Toronto", "dmy")).toBe("24-Oct-2026");
+	});
+
+	it("pads a single-digit day in the dd-Mon-yyyy format", () => {
+		const first = Date.UTC(2026, 2, 5, 15, 0);
+		expect(formatFooterDate(first, "America/Toronto", "dmy")).toBe(
+			"05-Mar-2026",
+		);
 	});
 
 	it("uses the timezone's date, not UTC's", () => {
@@ -51,14 +60,31 @@ describe("formatFooterBattery", () => {
 		expect(formatFooterBattery(3.923, "voltage")).toBe("3.92V");
 	});
 
-	it("shows a bar plus percentage for icon-percent", () => {
-		expect(formatFooterBattery(3.9, "icon-percent")).toBe("[##--] 50%");
+	it("treats the old icon-percent value as plain percent (the icon is always drawn)", () => {
+		expect(formatFooterBattery(3.9, "icon-percent")).toBe("50%");
 	});
 
 	it("returns empty for none or an unknown voltage", () => {
 		expect(formatFooterBattery(3.9, "none")).toBe("");
 		expect(formatFooterBattery(null, "percent")).toBe("");
 		expect(formatFooterBattery(Number.NaN, "percent")).toBe("");
+	});
+});
+
+describe("footerBatteryState", () => {
+	it("gives a level rounded to 5 and no charging flag", () => {
+		expect(footerBatteryState(3.9)).toEqual({ level: 50, charging: false });
+		expect(footerBatteryState(4.2)).toEqual({ level: 100, charging: false });
+		expect(footerBatteryState(3.4)).toEqual({ level: 0, charging: false });
+	});
+
+	it("flags charging above the charging voltage", () => {
+		expect(footerBatteryState(4.7)).toEqual({ level: 100, charging: true });
+	});
+
+	it("returns null without a usable voltage", () => {
+		expect(footerBatteryState(null)).toBeNull();
+		expect(footerBatteryState(Number.NaN)).toBeNull();
 	});
 });
 
@@ -77,7 +103,13 @@ describe("buildFooterParts", () => {
 				timezone: "America/Toronto",
 				voltage: 3.9,
 			}),
-		).toEqual({ left: "Oct 24", center: "Yin's board", right: "50%" });
+		).toEqual({
+			left: "Oct 24",
+			center: "Yin's board",
+			right: "50%",
+			batteryLevel: 50,
+			charging: false,
+		});
 	});
 
 	it("leaves a part empty when its option is off", () => {
@@ -86,6 +118,12 @@ describe("buildFooterParts", () => {
 				{ ...config, dateFormat: "none", batteryFormat: "none" },
 				{ now, timezone: "America/Toronto", voltage: 3.9 },
 			),
-		).toEqual({ left: "", center: "Yin's board", right: "" });
+		).toEqual({
+			left: "",
+			center: "Yin's board",
+			right: "",
+			batteryLevel: null,
+			charging: false,
+		});
 	});
 });

@@ -5,6 +5,7 @@ export const DATE_FORMATS = [
 	"short", // Oct 24
 	"weekday-short", // Sat, Oct 24
 	"iso", // 2026-10-24
+	"dmy", // 24-Oct-2026
 ] as const;
 
 export const BATTERY_FORMATS = [
@@ -22,12 +23,16 @@ export const DATE_FORMAT_LABELS: Record<FooterDateFormat, string> = {
 	short: "Oct 24",
 	"weekday-short": "Sat, Oct 24",
 	iso: "2026-10-24",
+	dmy: "24-Oct-2026",
 };
+
+/** Battery formats offered in the UI. `icon-percent` is kept only so stored values still read. */
+export const BATTERY_FORMAT_OPTIONS = ["none", "percent", "voltage"] as const;
 
 export const BATTERY_FORMAT_LABELS: Record<FooterBatteryFormat, string> = {
 	none: "Hidden",
 	percent: "85%",
-	"icon-percent": "[###-] 85%",
+	"icon-percent": "85%",
 	voltage: "3.92V",
 };
 
