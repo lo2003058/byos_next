@@ -35,6 +35,7 @@ import {
 	tempUp,
 	windIcon,
 } from "../weather/icons";
+import { weatherLayout } from "./size-layout";
 import { gridColumns, selectStats } from "./stats";
 
 export const paramsSchema = z.object({
@@ -233,7 +234,9 @@ export default function WeatherYin({
 		return CloudIcon; // default
 	};
 
-	const isHalfScreen = screenProfile.isHalfScreen;
+	const layout = weatherLayout(screenProfile);
+	const shownStats = weatherStats.slice(0, layout.maxStats);
+	const isHalfScreen = layout.kind === "half";
 	// Same outer margin as ScreenCanvas so footers line up with other recipes.
 	const canvasPadding = screenCanvasPadding(screenProfile);
 	// Icons are static <svg> constants and Takumi needs explicit pixel sizes
@@ -245,6 +248,96 @@ export default function WeatherYin({
 			{ width: px, height: px },
 		);
 	};
+
+	if (layout.kind === "banner" || layout.kind === "quarter") {
+		const isBanner = layout.kind === "banner";
+		const weatherIcon = sizeIcon(
+			getWeatherIcon(description),
+			isBanner ? 64 : 56,
+		);
+		const temperatureText = (
+			<div
+				className="font-inter"
+				style={{
+					display: "flex",
+					fontFamily: "Inter, sans-serif",
+					fontSize: screenMetric(screenProfile, isBanner ? 84 : 88),
+					lineHeight: 1,
+				}}
+			>
+				{temperature}°C
+			</div>
+		);
+		const statsGrid = (
+			<StatsGrid
+				screen={screenProfile}
+				stats={shownStats.map((stat) => ({
+					label: stat.label,
+					value: stat.value,
+					icon: sizeIcon(stat.icon, isBanner ? 40 : 36),
+				}))}
+				columns={
+					isBanner
+						? gridColumns(shownStats.length, false)
+						: Math.max(1, shownStats.length)
+				}
+				align="center"
+				fill={isBanner}
+				rowHeight={isBanner ? undefined : screenMetric(screenProfile, 64)}
+			/>
+		);
+		return (
+			<PreSatori
+				width={screenProfile.logicalWidth}
+				height={screenProfile.logicalHeight}
+			>
+				<div
+					className="flex flex-col w-full h-full bg-white text-black"
+					style={{
+						padding: canvasPadding,
+						gap: screenMetric(screenProfile, 6),
+					}}
+				>
+					<div
+						style={{
+							display: "flex",
+							flex: 1,
+							flexDirection: "row",
+							alignItems: "center",
+							gap: screenMetric(screenProfile, 10),
+							overflow: "hidden",
+						}}
+					>
+						<div
+							style={{
+								display: "flex",
+								flexDirection: isBanner ? "column" : "row",
+								alignItems: "center",
+								justifyContent: isBanner ? "center" : "space-between",
+								flex: isBanner ? "none" : 1,
+								gap: screenMetric(screenProfile, 4),
+							}}
+						>
+							{temperatureText}
+							{weatherIcon}
+						</div>
+						{isBanner && shownStats.length > 0 ? (
+							<div style={{ display: "flex", flex: 1, alignSelf: "stretch" }}>
+								<div style={{ display: "flex", flex: 1 }}>{statsGrid}</div>
+							</div>
+						) : null}
+					</div>
+					{!isBanner && shownStats.length > 0 ? statsGrid : null}
+					<ScreenFooter
+						screen={screenProfile}
+						left={location || lastUpdated}
+						right={location ? lastUpdated || undefined : undefined}
+						style={outlineFooterStyle()}
+					/>
+				</div>
+			</PreSatori>
+		);
+	}
 
 	return (
 		<PreSatori
