@@ -10,31 +10,36 @@ import {
 const now = Date.UTC(2026, 9, 24, 15, 30);
 
 describe("formatFooterDate", () => {
-	it("formats in the device timezone", () => {
-		expect(formatFooterDate(now, "America/Toronto", "short")).toBe("Oct 24");
-		expect(formatFooterDate(now, "America/Toronto", "weekday-short")).toBe(
-			"Sat, Oct 24",
-		);
-		expect(formatFooterDate(now, "America/Toronto", "iso")).toBe("2026-10-24");
-		expect(formatFooterDate(now, "America/Toronto", "dmy")).toBe("24-Oct-2026");
+	const tz = "America/Toronto";
+
+	it.each([
+		["YYYY-MM-DD", "2026-10-24"],
+		["YYYY-DD-MM", "2026-24-10"],
+		["DD-MM-YYYY", "24-10-2026"],
+		["MM-DD-YYYY", "10-24-2026"],
+		["DD-MMM-YYYY", "24-Oct-2026"],
+		["MMM D", "Oct 24"],
+		["ddd, MMM D", "Sat, Oct 24"],
+	] as const)("formats %s", (format, expected) => {
+		expect(formatFooterDate(now, tz, format)).toBe(expected);
 	});
 
-	it("pads a single-digit day in the dd-Mon-yyyy format", () => {
-		const first = Date.UTC(2026, 2, 5, 15, 0);
-		expect(formatFooterDate(first, "America/Toronto", "dmy")).toBe(
-			"05-Mar-2026",
-		);
+	it("pads day and month in numeric formats but not in MMM D", () => {
+		const first = Date.UTC(2026, 2, 5, 15, 0); // 5 Mar 2026
+		expect(formatFooterDate(first, tz, "DD-MM-YYYY")).toBe("05-03-2026");
+		expect(formatFooterDate(first, tz, "DD-MMM-YYYY")).toBe("05-Mar-2026");
+		expect(formatFooterDate(first, tz, "MMM D")).toBe("Mar 5");
 	});
 
 	it("uses the timezone's date, not UTC's", () => {
 		// 02:00 UTC on the 25th is still the 24th in Toronto.
 		const late = Date.UTC(2026, 9, 25, 2, 0);
-		expect(formatFooterDate(late, "America/Toronto", "iso")).toBe("2026-10-24");
+		expect(formatFooterDate(late, tz, "YYYY-MM-DD")).toBe("2026-10-24");
 	});
 
 	it("returns an empty string for none or a bad timezone", () => {
-		expect(formatFooterDate(now, "America/Toronto", "none")).toBe("");
-		expect(formatFooterDate(now, "Not/AZone", "short")).toBe("");
+		expect(formatFooterDate(now, tz, "none")).toBe("");
+		expect(formatFooterDate(now, "Not/AZone", "MMM D")).toBe("");
 	});
 });
 
@@ -92,7 +97,7 @@ describe("buildFooterParts", () => {
 	const config = {
 		enabled: true,
 		text: "Yin's board",
-		dateFormat: "short",
+		dateFormat: "MMM D",
 		batteryFormat: "percent",
 	} as const;
 

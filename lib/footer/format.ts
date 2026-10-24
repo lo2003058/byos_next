@@ -5,14 +5,6 @@ import type {
 	FooterDateFormat,
 } from "./config";
 
-const DATE_OPTIONS: Record<
-	Exclude<FooterDateFormat, "none" | "iso" | "dmy">,
-	Intl.DateTimeFormatOptions
-> = {
-	short: { month: "short", day: "numeric" },
-	"weekday-short": { weekday: "short", month: "short", day: "numeric" },
-};
-
 /** Date in the device's timezone; empty for "none" or an invalid timezone. */
 export function formatFooterDate(
 	epochMs: number,
@@ -21,29 +13,33 @@ export function formatFooterDate(
 ): string {
 	if (format === "none" || !Number.isFinite(epochMs)) return "";
 	try {
-		if (format === "iso") {
-			return new Intl.DateTimeFormat("en-CA", {
-				timeZone: timezone,
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-			}).format(new Date(epochMs));
-		}
-		if (format === "dmy") {
-			const parts = new Intl.DateTimeFormat("en-US", {
-				timeZone: timezone,
-				day: "2-digit",
-				month: "short",
-				year: "numeric",
-			}).formatToParts(new Date(epochMs));
-			const get = (type: string) =>
-				parts.find((part) => part.type === type)?.value ?? "";
-			return `${get("day")}-${get("month")}-${get("year")}`;
-		}
-		return new Intl.DateTimeFormat("en-US", {
+		const parts = new Intl.DateTimeFormat("en-US", {
 			timeZone: timezone,
-			...DATE_OPTIONS[format],
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			weekday: "short",
+		}).formatToParts(new Date(epochMs));
+		const monthName = new Intl.DateTimeFormat("en-US", {
+			timeZone: timezone,
+			month: "short",
 		}).format(new Date(epochMs));
+		const get = (type: string) =>
+			parts.find((part) => part.type === type)?.value ?? "";
+		const day = get("day");
+		const values: Record<string, string> = {
+			YYYY: get("year"),
+			MM: get("month"),
+			DD: day,
+			MMM: monthName,
+			D: String(Number(day)),
+			ddd: get("weekday"),
+		};
+		// Longest tokens first so "MMM" is not read as "MM" + "M".
+		return format.replace(
+			/YYYY|MMM|MM|DD|ddd|D/g,
+			(token) => values[token] ?? token,
+		);
 	} catch {
 		return "";
 	}

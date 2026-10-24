@@ -560,7 +560,7 @@ export default function DeviceEditForm({
 										/>
 									</Field>
 									<Field
-										label="Footer date"
+										label="Footer date format"
 										htmlFor="global_footer_date_format"
 									>
 										<Select
