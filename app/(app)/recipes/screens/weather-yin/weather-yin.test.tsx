@@ -77,4 +77,28 @@ describe("WeatherYin show flags", () => {
 			expect(half({ showHighLow: false })).not.toContain("high-low");
 		});
 	});
+
+	describe("footer", () => {
+		const footer = () =>
+			renderToStaticMarkup(
+				<WeatherYin {...base} suggestion="Cool, wear a jumper" />,
+			);
+
+		it("does not show the suggestion", () => {
+			expect(footer()).not.toContain("wear a jumper");
+		});
+
+		it("puts the date on the left and the location on the right", () => {
+			const out = footer();
+			expect(out.indexOf("Oct 24, 14:00")).toBeGreaterThan(-1);
+			expect(out.lastIndexOf("Oct 24, 14:00")).toBeLessThan(
+				out.lastIndexOf("Toronto, Canada"),
+			);
+		});
+
+		it("shows the location alone when there is no date", () => {
+			const out = renderToStaticMarkup(<WeatherYin {...base} lastUpdated="" />);
+			expect(out).toContain("Toronto, Canada");
+		});
+	});
 });

@@ -157,7 +157,6 @@ export default function WeatherYin({
 	pressure = "Loading...",
 	sunset = "Loading...",
 	sunrise = "Loading...",
-	suggestion = "",
 	width = DEFAULT_IMAGE_WIDTH,
 	height = DEFAULT_IMAGE_HEIGHT,
 	screen,
@@ -294,12 +293,8 @@ export default function WeatherYin({
 					)}
 					<ScreenFooter
 						screen={screenProfile}
-						left={suggestion || location}
-						right={
-							location
-								? `${location}${lastUpdated ? ` · ${lastUpdated}` : ""}`
-								: lastUpdated
-						}
+						left={lastUpdated || location}
+						right={lastUpdated ? location : undefined}
 						style={outlineFooterStyle()}
 					/>
 				</div>
