@@ -34,6 +34,7 @@ import {
 	tempUp,
 	windIcon,
 } from "../weather/icons";
+import { gridColumns, selectStats } from "./stats";
 
 export const paramsSchema = z.object({
 	location: z
@@ -55,7 +56,53 @@ export const paramsSchema = z.object({
 			"Optional exact longitude; when set with latitude, skips geocoding",
 		)
 		.meta({ title: "Longitude" }),
+	showHighLow: z
+		.boolean()
+		.default(true)
+		.describe("Show today's high and low next to the icon")
+		.meta({ title: "Show high / low" }),
+	showFeelsLike: z
+		.boolean()
+		.default(true)
+		.describe("Show the feels-like temperature")
+		.meta({ title: "Show feels like" }),
+	showHumidity: z
+		.boolean()
+		.default(true)
+		.describe("Show relative humidity")
+		.meta({ title: "Show humidity" }),
+	showWind: z
+		.boolean()
+		.default(true)
+		.describe("Show wind speed")
+		.meta({ title: "Show wind speed" }),
+	showPressure: z
+		.boolean()
+		.default(true)
+		.describe("Show air pressure")
+		.meta({ title: "Show pressure" }),
+	showSunrise: z
+		.boolean()
+		.default(true)
+		.describe("Show sunrise time")
+		.meta({ title: "Show sunrise" }),
+	showSunset: z
+		.boolean()
+		.default(true)
+		.describe("Show sunset time")
+		.meta({ title: "Show sunset" }),
 });
+
+type ShowFlags = Pick<
+	z.infer<typeof paramsSchema>,
+	| "showHighLow"
+	| "showFeelsLike"
+	| "showHumidity"
+	| "showWind"
+	| "showPressure"
+	| "showSunrise"
+	| "showSunset"
+>;
 
 export const dataSchema = z.object({
 	temperature: z.string().default("Loading..."),
@@ -94,6 +141,7 @@ interface WeatherProps {
 	width?: number;
 	height?: number;
 	screen?: ScreenProfile;
+	show?: Partial<ShowFlags>;
 }
 
 export default function WeatherYin({
@@ -113,17 +161,51 @@ export default function WeatherYin({
 	width = DEFAULT_IMAGE_WIDTH,
 	height = DEFAULT_IMAGE_HEIGHT,
 	screen,
+	show = {},
 }: WeatherProps) {
 	const screenProfile = screen ?? createScreenProfile({ width, height });
 	// Weather statistics
-	const weatherStats = [
-		{ label: "Feels Like", value: `${feelsLike}°C`, icon: tempIcon },
-		{ label: "Humidity", value: `${humidity}%`, icon: humidityIcon },
-		{ label: "Wind Speed", value: `${windSpeed} km/h`, icon: windIcon },
-		{ label: "Pressure", value: `${pressure} hPa`, icon: pressureIcon },
-		{ label: "Sunrise", value: `${sunrise}`, icon: sunriseIcon },
-		{ label: "Sunset", value: `${sunset}`, icon: sunsetIcon },
-	];
+	const weatherStats = selectStats(
+		[
+			{
+				key: "showFeelsLike",
+				label: "Feels Like",
+				value: `${feelsLike}°C`,
+				icon: tempIcon,
+			},
+			{
+				key: "showHumidity",
+				label: "Humidity",
+				value: `${humidity}%`,
+				icon: humidityIcon,
+			},
+			{
+				key: "showWind",
+				label: "Wind Speed",
+				value: `${windSpeed} km/h`,
+				icon: windIcon,
+			},
+			{
+				key: "showPressure",
+				label: "Pressure",
+				value: `${pressure} hPa`,
+				icon: pressureIcon,
+			},
+			{
+				key: "showSunrise",
+				label: "Sunrise",
+				value: `${sunrise}`,
+				icon: sunriseIcon,
+			},
+			{
+				key: "showSunset",
+				label: "Sunset",
+				value: `${sunset}`,
+				icon: sunsetIcon,
+			},
+		],
+		show,
+	);
 
 	// Get weather icon based on description
 	const getWeatherIcon = (desc: string) => {
@@ -168,7 +250,7 @@ export default function WeatherYin({
 						<div className="flex items-center justify-center">
 							{sizeIcon(getWeatherIcon(description), 128)}
 						</div>
-						{!isHalfScreen && (
+						{!isHalfScreen && show.showHighLow !== false && (
 							<div className="text-4xl lg:text-5xl 2xl:text-6xl mt-4 font-blockkie">
 								<div className="flex flex-row items-center gap-2">
 									{sizeIcon(tempUp, 40)} {highTemp}°C
@@ -182,16 +264,20 @@ export default function WeatherYin({
 					className="p-4 lg:p-8 2xl:p-12 pt-0 lg:pt-0 2xl:pt-0 flex flex-col flex-1"
 					style={{ gap: screenMetric(screenProfile, isHalfScreen ? 8 : 16) }}
 				>
-					<StatsGrid
-						screen={screenProfile}
-						stats={weatherStats.map((stat) => ({
-							label: stat.label,
-							value: stat.value,
-							icon: sizeIcon(stat.icon, 48),
-						}))}
-						columns={isHalfScreen ? 2 : 3}
-						fill
-					/>
+					{weatherStats.length > 0 ? (
+						<StatsGrid
+							screen={screenProfile}
+							stats={weatherStats.map((stat) => ({
+								label: stat.label,
+								value: stat.value,
+								icon: sizeIcon(stat.icon, 48),
+							}))}
+							columns={gridColumns(weatherStats.length, isHalfScreen)}
+							fill
+						/>
+					) : (
+						<div style={{ display: "flex", flex: 1 }} />
+					)}
 					<ScreenFooter
 						screen={screenProfile}
 						left={suggestion || location}
@@ -240,7 +326,13 @@ export const definition: RecipeDefinition<
 			lastUpdated: to24Hour(data.lastUpdated),
 		} as z.infer<typeof dataSchema>;
 	},
-	Component: ({ width, height, screen, data }) => (
-		<WeatherYin {...data} width={width} height={height} screen={screen} />
+	Component: ({ width, height, screen, params, data }) => (
+		<WeatherYin
+			{...data}
+			width={width}
+			height={height}
+			screen={screen}
+			show={params}
+		/>
 	),
 };
