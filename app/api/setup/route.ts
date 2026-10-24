@@ -123,7 +123,17 @@ export async function GET(request: Request) {
 
 		const currentUserId = await resolveSetupUserId(apiKey);
 		if (!currentUserId) {
-			logError("Refusing to set up an unowned device", {
+			// Stock firmware calls /api/setup before it has any credentials, so an
+			// unowned device cannot be refused here or it never reaches /api/display
+			// (where the claim code is shown). Hand out a key without writing a
+			// device row; the device is created when the owner claims the code.
+			const pendingApiKey =
+				apiKey ||
+				generateApiKey(
+					macAddress,
+					new Date().toISOString().replace(/[-:Z]/g, ""),
+				);
+			logInfo("Issued API key to unowned device pending claim", {
 				source: "api/setup",
 				metadata: {
 					macAddress,
@@ -133,13 +143,14 @@ export async function GET(request: Request) {
 			});
 			return NextResponse.json(
 				{
-					status: 403,
-					api_key: null,
-					friendly_id: null,
+					status: 200,
+					api_key: pendingApiKey,
+					friendly_id: generateFriendlyId(macAddress),
 					image_url: null,
-					message: "Device setup requires an authenticated owner",
+					filename: null,
+					message: "Device awaiting claim. Enter the code shown on screen.",
 				},
-				{ status: 403 },
+				{ status: 200 },
 			);
 		}
 
