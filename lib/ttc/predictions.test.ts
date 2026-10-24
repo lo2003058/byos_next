@@ -177,6 +177,17 @@ describe("fetchTtcPredictions", () => {
 		await expect(fetchTtcPredictions("  ")).rejects.toThrow(/stop/i);
 	});
 
+	it("refuses an oversized response instead of parsing it", async () => {
+		const huge = JSON.stringify({ padding: "x".repeat(2_000_000) });
+		const fetchImpl = jest.fn(async () => new Response(huge));
+
+		await expect(
+			fetchTtcPredictions("8126", {
+				fetchImpl: fetchImpl as unknown as typeof fetch,
+			}),
+		).rejects.toThrow(/too large/i);
+	});
+
 	it("throws on a non-OK response", async () => {
 		const fetchImpl = jest.fn(async () => new Response("err", { status: 503 }));
 
@@ -278,5 +289,98 @@ describe("fetchTtcSections", () => {
 
 		expect(sections).toHaveLength(1);
 		expect(fetchImpl).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe("parseTtcPredictions: clock time and express routes", () => {
+	it("reads the arrival time from epochTime", () => {
+		const result = parseTtcPredictions({
+			predictions: route("53", "East - 53 Steeles East towards Staines", [
+				prediction(300, { epochTime: "1792823000000" }),
+			]),
+		});
+
+		expect(result.arrivals[0].epochMs).toBe(1792823000000);
+	});
+
+	it("leaves epochMs undefined when the feed omits it", () => {
+		const result = parseTtcPredictions({
+			predictions: route("53", "East - 53 towards Staines", prediction(300)),
+		});
+
+		expect(result.arrivals[0].epochMs).toBeUndefined();
+	});
+
+	it("flags routes whose title says Express", () => {
+		const result = parseTtcPredictions({
+			predictions: [
+				{
+					...route(
+						"953",
+						"East - 953 Steeles East Express towards Staines",
+						prediction(60),
+					),
+					routeTitle: "953-Steeles East Express",
+				},
+				{
+					...route(
+						"53",
+						"East - 53 Steeles East towards Staines",
+						prediction(120),
+					),
+					routeTitle: "53-Steeles East",
+				},
+			],
+		});
+
+		expect(result.arrivals.map((a) => [a.route, a.express])).toEqual([
+			["953", true],
+			["53", false],
+		]);
+	});
+
+	it("keeps the soonest N per route so a frequent route cannot hide an express", () => {
+		const frequent = route("53", "East - 53 towards Staines", [
+			prediction(60),
+			prediction(120),
+			prediction(180),
+			prediction(240),
+		]);
+		const express = route("953", "East - 953 towards Staines", [
+			prediction(900),
+			prediction(1500),
+		]);
+
+		const result = parseTtcPredictions(
+			{ predictions: [frequent, express] },
+			{ perRouteLimit: 2 },
+		);
+
+		expect(result.arrivals.map((a) => [a.route, a.minutes])).toEqual([
+			["53", 1],
+			["53", 2],
+			["953", 15],
+			["953", 25],
+		]);
+	});
+
+	it("still honours the overall limit after the per-route cut", () => {
+		const result = parseTtcPredictions(
+			{
+				predictions: [
+					route("53", "East - 53 towards Staines", [
+						prediction(60),
+						prediction(120),
+					]),
+					route("953", "East - 953 towards Staines", [
+						prediction(180),
+						prediction(240),
+					]),
+				],
+			},
+			{ perRouteLimit: 2, limit: 3 },
+		);
+
+		expect(result.arrivals).toHaveLength(3);
 	});
 });
