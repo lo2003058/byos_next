@@ -129,3 +129,39 @@ export async function fetchTtcPredictions(
 	}
 	return parseTtcPredictions(await response.json(), parseOptions);
 }
+
+export type TtcStopSection = TtcPredictions & {
+	stopId: string;
+	/** Empty when the stop loaded; otherwise why it did not. */
+	error: string;
+};
+
+/**
+ * Load several stops in parallel. One stop failing must not blank the others,
+ * so failures are returned on that section instead of thrown.
+ */
+export async function fetchTtcSections(
+	stopIds: readonly string[],
+	options: ParseOptions & { fetchImpl?: typeof fetch } = {},
+): Promise<TtcStopSection[]> {
+	const unique = [
+		...new Set(stopIds.map((stop) => stop.trim()).filter(Boolean)),
+	];
+
+	return Promise.all(
+		unique.map(async (stopId): Promise<TtcStopSection> => {
+			try {
+				const result = await fetchTtcPredictions(stopId, options);
+				return { stopId, ...result, error: "" };
+			} catch (error) {
+				return {
+					stopId,
+					stopTitle: "",
+					arrivals: [],
+					error:
+						error instanceof Error ? error.message : "Could not load TTC data",
+				};
+			}
+		}),
+	);
+}
