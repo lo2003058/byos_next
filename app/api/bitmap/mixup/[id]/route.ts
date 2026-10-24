@@ -13,6 +13,9 @@ import {
 } from "@/lib/device/mixup-access";
 import { noStoreImageResponse } from "@/lib/device/no-store-response";
 import { parseRequestHeaders } from "@/lib/device/request-headers";
+import { composeWithFooter } from "@/lib/footer/compose";
+import { renderFooterPng } from "@/lib/footer/render-footer";
+import { resolveFooterPlan } from "@/lib/footer/resolve";
 import { getLayoutById, type LayoutSlot } from "@/lib/mixup/constants";
 import {
 	DEFAULT_IMAGE_HEIGHT,
@@ -153,7 +156,15 @@ export async function GET(
 			return new Response("Mixup not found", { status: 404 });
 		}
 
-		const layout = getLayoutById(mixup.layout_id, width, height);
+		// The global footer takes a strip off the bottom; slots fill what is left.
+		const footer = await resolveFooterPlan(accessToken, {
+			width,
+			height,
+			now: Date.now(),
+		});
+		const contentHeight = footer ? footer.contentHeight : height;
+
+		const layout = getLayoutById(mixup.layout_id, width, contentHeight);
 		if (!layout) {
 			logger.warn(`Invalid layout for mixup ${mixupId}: ${mixup.layout_id}`);
 			return new Response("Invalid layout", { status: 400 });
@@ -173,12 +184,25 @@ export async function GET(
 			layout.slots,
 			assignments,
 			width,
-			height,
+			contentHeight,
 			profile,
 			userId,
 			cookieHeader || undefined,
 		);
-		const image = await renderDeviceImage({ png: compositedPng, profile });
+		const withFooter = footer
+			? await composeWithFooter({
+					content: compositedPng,
+					footer: await renderFooterPng(footer.parts, {
+						width,
+						height: footer.footerHeight,
+						deviceHeight: height,
+					}),
+					width,
+					height,
+					footerHeight: footer.footerHeight,
+				})
+			: compositedPng;
+		const image = await renderDeviceImage({ png: withFooter, profile });
 
 		return noStoreImageResponse(image);
 	} catch (error) {

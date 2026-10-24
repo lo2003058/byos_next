@@ -8,6 +8,7 @@ import {
 import { parseRequestHeaders } from "@/lib/device/request-headers";
 import { selectDisplayForDevice } from "@/lib/display/select";
 import { getLatestFirmware, isUpdateAvailable } from "@/lib/firmware";
+import { withAccessToken } from "@/lib/footer/access-token-url";
 import { logError, logInfo } from "@/lib/logger";
 import { DeviceDisplayMode } from "@/lib/mixup/constants";
 import { playlistImageTarget } from "@/lib/playlists/screen-ref";
@@ -197,6 +198,12 @@ export async function GET(request: Request) {
 					device.timezone || "UTC",
 				);
 				break;
+		}
+
+		// The global footer needs to know the device when the image is fetched, and
+		// the precache fetch below sends no headers, so carry the token in the URL.
+		if (device.global_footer_enabled && headers.apiKey) {
+			imageUrl = withAccessToken(imageUrl, headers.apiKey);
 		}
 
 		precacheImageInBackground(imageUrl, device.friendly_id);

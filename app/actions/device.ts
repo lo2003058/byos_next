@@ -16,6 +16,7 @@ import {
 	hashClaimCode,
 	normalizeClaimCode,
 } from "@/lib/device/pending-device-claims";
+import { parseFooterColumns } from "@/lib/footer/config";
 import type { Device, Log } from "@/lib/types";
 import { generateFriendlyId, generateMockMacAddress } from "@/utils/helpers";
 
@@ -286,6 +287,9 @@ export async function updateDevice(
 		updateData.palette_id = device.palette_id || null;
 	if (device.temperature_profile !== undefined)
 		updateData.temperature_profile = device.temperature_profile;
+	const footer = parseFooterColumns(device);
+	if (!footer.success) return { success: false, error: footer.error };
+	Object.assign(updateData, footer.columns);
 
 	updateData.updated_at = new Date().toISOString();
 

@@ -1,3 +1,7 @@
+import type {
+	FooterBatteryFormat,
+	FooterDateFormat,
+} from "@/lib/footer/config";
 import { DeviceDisplayMode } from "@/lib/mixup/constants";
 
 export type Json =
@@ -51,6 +55,10 @@ export type Device = {
 	sleep_end_time: number | null;
 	temperature_profile: TemperatureProfile;
 	supports_temperature_profile: boolean | null;
+	global_footer_enabled: boolean;
+	global_footer_text: string;
+	global_footer_date_format: FooterDateFormat;
+	global_footer_battery_format: FooterBatteryFormat;
 };
 
 export type TemperatureProfile = "default" | "a" | "b" | "c";

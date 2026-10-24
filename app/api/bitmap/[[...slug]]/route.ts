@@ -9,6 +9,7 @@ import {
 	parseRequestHeaders,
 	resolveUserIdFromApiKey,
 } from "@/lib/device/request-headers";
+import { resolveFooterPlan } from "@/lib/footer/resolve";
 import {
 	DEFAULT_IMAGE_HEIGHT,
 	DEFAULT_IMAGE_WIDTH,
@@ -42,8 +43,11 @@ export async function GET(
 		// Devices send an Access-Token; browser previews (an <img> fetch) send the
 		// session cookie instead, so fall back to the signed-in user — otherwise
 		// user-scoped recipes are invisible and render as "Unknown recipe".
-		const apiKeyOwnerId = headers.apiKey
-			? await resolveUserIdFromApiKey(headers.apiKey)
+		// The token also travels as `access_token` in the image URL: the server's
+		// own precache fetch sends no headers, and the footer needs the device.
+		const deviceKey = headers.apiKey ?? searchParams.get("access_token");
+		const apiKeyOwnerId = deviceKey
+			? await resolveUserIdFromApiKey(deviceKey)
 			: null;
 		const userId = apiKeyOwnerId ?? (await getCurrentUserId());
 
@@ -73,6 +77,12 @@ export async function GET(
 		const oversized = rejectOversizedImageArea(imageWidth, imageHeight);
 		if (oversized) return oversized;
 
+		const footer = await resolveFooterPlan(deviceKey, {
+			width: imageWidth,
+			height: imageHeight,
+			now: Date.now(),
+		});
+
 		const image = await renderRecipeForDevice({
 			slug: recipeSlug,
 			profile,
@@ -80,6 +90,7 @@ export async function GET(
 			height: imageHeight,
 			userId,
 			cookies: cookieHeader || undefined,
+			footer,
 		});
 
 		if (!image?.buffer.length) {
