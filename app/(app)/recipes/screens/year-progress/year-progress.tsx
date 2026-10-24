@@ -16,13 +16,42 @@ import {
 } from "@/lib/trmnl/screen-profile";
 import { slotKind } from "@/lib/trmnl/slot-kind";
 import { PreSatori } from "@/utils/pre-satori";
-import { type MonthRow, yearMonthGrid, yearProgress } from "./progress";
+import { gridPitch, MonthGrid, ProgressBar } from "./dot-grid";
+import { getPublicHolidays } from "./get-holidays";
+import { HolidayCards, HolidayPanel } from "./holiday-parts";
+import {
+	DEFAULT_PROVINCE,
+	normalizeProvince,
+	PROVINCE_NAMES,
+} from "./holidays";
+import { yearMonthGrid, yearProgress } from "./progress";
+import { Text } from "./ui";
 
 const DEFAULT_TIMEZONE = "America/Toronto";
-const BOLD = "interBold, inter, sans-serif";
-const MAX_DAYS_IN_MONTH = 31;
+const MONTHS = 12;
 
-export const paramsSchema = z.object({});
+export const paramsSchema = z.object({
+	showHolidays: z
+		.boolean()
+		.default(true)
+		.describe("List the next public holidays next to the year progress")
+		.meta({ title: "Show public holidays" }),
+	province: z
+		.string()
+		.default(DEFAULT_PROVINCE)
+		.describe(
+			`Province or territory code for the holidays: ${Object.keys(PROVINCE_NAMES).join(", ")}`,
+		)
+		.meta({ title: "Province code", placeholder: DEFAULT_PROVINCE }),
+});
+
+const holidaySchema = z.object({
+	date: z.string(),
+	name: z.string(),
+	weekday: z.string(),
+	daysUntil: z.number(),
+	longWeekend: z.boolean(),
+});
 
 export const dataSchema = z.object({
 	year: z.number().default(new Date().getUTCFullYear()),
@@ -31,6 +60,11 @@ export const dataSchema = z.object({
 	daysLeft: z.number().default(364),
 	percent: z.number().default(0),
 	jan1Weekday: z.number().default(0),
+	showHolidays: z.boolean().default(true),
+	province: z.string().default(DEFAULT_PROVINCE),
+	provinceName: z.string().default(PROVINCE_NAMES[DEFAULT_PROVINCE]),
+	holidays: z.array(holidaySchema).default([]),
+	holidayError: z.string().default(""),
 });
 
 type YearProgressData = z.infer<typeof dataSchema>;
@@ -41,138 +75,6 @@ type Props = Partial<YearProgressData> & {
 	screen?: ScreenProfile;
 };
 
-function Dot({
-	size,
-	state,
-}: {
-	size: number;
-	state: "done" | "today" | "future";
-}) {
-	const ring = Math.max(1, Math.round(size * 0.14));
-	return (
-		<div
-			data-today={state === "today" ? "true" : undefined}
-			style={{
-				display: "flex",
-				flex: "none",
-				width: size,
-				height: size,
-				boxSizing: "border-box",
-				borderRadius: size,
-				backgroundColor: state === "done" ? "#000" : "#fff",
-				border:
-					state === "done"
-						? "none"
-						: state === "today"
-							? `${ring * 2}px solid #000`
-							: `${ring}px solid #000`,
-			}}
-		/>
-	);
-}
-
-function MonthGrid({
-	months,
-	width,
-	height,
-	screen,
-}: {
-	months: MonthRow[];
-	width: number;
-	height: number;
-	screen: ScreenProfile;
-}) {
-	const labelWidth = screenMetric(screen, 40);
-	const gap = Math.max(2, screenMetric(screen, 3));
-	const pitch = Math.floor(
-		Math.min((width - labelWidth) / MAX_DAYS_IN_MONTH, height / months.length),
-	);
-	const dot = Math.max(4, pitch - gap);
-
-	return (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "flex-start",
-				justifyContent: "center",
-				flex: 1,
-				width,
-			}}
-		>
-			{months.map((month) => (
-				<div
-					key={month.label}
-					style={{
-						display: "flex",
-						flexDirection: "row",
-						alignItems: "center",
-						height: pitch,
-					}}
-				>
-					<div
-						className="font-inter"
-						style={{
-							display: "flex",
-							width: labelWidth,
-							fontFamily: "inter",
-							fontSize: Math.max(
-								10,
-								Math.min(screenFontSize(screen, 16, 10), pitch),
-							),
-						}}
-					>
-						{month.label}
-					</div>
-					<div style={{ display: "flex", flexDirection: "row", gap }}>
-						{Array.from({ length: month.days }, (_, index) => {
-							const day = index + 1;
-							const state =
-								month.todayDay === day
-									? "today"
-									: day <= month.doneDays
-										? "done"
-										: "future";
-							return <Dot key={day} size={dot} state={state} />;
-						})}
-					</div>
-				</div>
-			))}
-		</div>
-	);
-}
-
-function ProgressBar({
-	width,
-	percent,
-	screen,
-}: {
-	width: number;
-	percent: number;
-	screen: ScreenProfile;
-}) {
-	const border = Math.max(2, screenMetric(screen, 3));
-	const fill = Math.round((width - border * 2) * (percent / 100));
-	return (
-		<div
-			data-testid="progress-bar"
-			style={{
-				display: "flex",
-				flexDirection: "row",
-				width,
-				height: screenMetric(screen, 30),
-				boxSizing: "border-box",
-				border: `${border}px solid #000`,
-				borderRadius: screenMetric(screen, 8),
-				overflow: "hidden",
-				backgroundColor: "#fff",
-			}}
-		>
-			<div style={{ display: "flex", width: fill, backgroundColor: "#000" }} />
-		</div>
-	);
-}
-
 export default function YearProgress({
 	year = new Date().getUTCFullYear(),
 	dayOfYear = 1,
@@ -180,73 +82,23 @@ export default function YearProgress({
 	daysLeft = 364,
 	percent = 0,
 	jan1Weekday = 0,
+	showHolidays = true,
+	provinceName = PROVINCE_NAMES[DEFAULT_PROVINCE],
+	holidays = [],
+	holidayError = "",
 	width = DEFAULT_IMAGE_WIDTH,
 	height = DEFAULT_IMAGE_HEIGHT,
 	screen,
 }: Props) {
 	const screenProfile = screen ?? createScreenProfile({ width, height });
 	const kind = slotKind(screenProfile);
+	const metric = (value: number) => screenMetric(screenProfile, value);
+	const font = (value: number, min = 12) =>
+		screenFontSize(screenProfile, value, min);
 	const padding = screenCanvasPadding(screenProfile);
 	const innerWidth = screenProfile.logicalWidth - padding * 2;
 	const innerHeight = screenProfile.logicalHeight - padding * 2;
-	const tall = kind === "full" || kind === "half";
-	const percentSize = screenMetric(
-		screenProfile,
-		{ full: 92, half: 64, banner: 84, quarter: 60 }[kind],
-	);
-	const detailSize = screenFontSize(
-		screenProfile,
-		{ full: 26, half: 20, banner: 26, quarter: 20 }[kind],
-		14,
-	);
-
-	const header = (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "flex-end",
-				justifyContent: "space-between",
-				width: innerWidth,
-			}}
-		>
-			<div
-				className="font-interBold"
-				style={{
-					display: "flex",
-					fontFamily: BOLD,
-					fontSize: percentSize,
-					lineHeight: 1,
-				}}
-			>
-				{`${percent}%`}
-			</div>
-			<div
-				className="font-inter"
-				style={{
-					display: "flex",
-					flexDirection: "column",
-					alignItems: "flex-end",
-					fontFamily: "inter",
-					fontSize: detailSize,
-					lineHeight: 1.2,
-				}}
-			>
-				<div
-					className="font-interBold"
-					style={{ display: "flex", fontFamily: BOLD }}
-				>
-					{year}
-				</div>
-				<div className="font-inter" style={{ display: "flex" }}>
-					{`Day ${dayOfYear} of ${daysInYear}`}
-				</div>
-				<div className="font-inter" style={{ display: "flex" }}>
-					{`${daysLeft} days left`}
-				</div>
-			</div>
-		</div>
-	);
+	const gap = metric(14);
 
 	const months = yearMonthGrid({
 		year,
@@ -256,41 +108,226 @@ export default function YearProgress({
 		percent,
 		jan1Weekday,
 	});
-	const headerHeight = Math.round(percentSize * 1.15);
-	const gridHeight =
-		innerHeight - headerHeight - screenMetric(screenProfile, 8);
+
+	const percentBlock = (size: number) => (
+		<Text size={metric(size)} bold style={{ lineHeight: 1 }}>
+			{`${percent}%`}
+		</Text>
+	);
+	const detailLines = (size: number, align: "flex-start" | "flex-end") => (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				alignItems: align,
+				gap: metric(2),
+			}}
+		>
+			<Text size={font(size)} bold>
+				{String(year)}
+			</Text>
+			<Text size={font(size)}>{`Day ${dayOfYear} of ${daysInYear}`}</Text>
+			<Text size={font(size)}>{`${daysLeft} days left`}</Text>
+		</div>
+	);
+	const headerRow = (percentSize: number, detailSize: number, w: number) => (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "row",
+				alignItems: "flex-end",
+				justifyContent: "space-between",
+				width: w,
+			}}
+		>
+			{percentBlock(percentSize)}
+			{detailLines(detailSize, "flex-end")}
+		</div>
+	);
+	const holidayProps = { holidays, error: holidayError, screen: screenProfile };
+
+	let body: React.ReactNode;
+	if (kind === "full" && showHolidays) {
+		const leftWidth = Math.round(innerWidth * 0.53);
+		const rightWidth = innerWidth - leftWidth - gap;
+		const headerHeight = metric(104);
+		body = (
+			<div style={{ display: "flex", flex: 1, flexDirection: "row", gap }}>
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						width: leftWidth,
+						gap: metric(6),
+					}}
+				>
+					<div
+						style={{
+							display: "flex",
+							flexDirection: "column",
+							height: headerHeight,
+							justifyContent: "flex-end",
+							gap: metric(4),
+						}}
+					>
+						{percentBlock(70)}
+						<Text size={font(20)}>
+							{`${year} · Day ${dayOfYear} of ${daysInYear} · ${daysLeft} days left`}
+						</Text>
+					</div>
+					<MonthGrid
+						months={months}
+						width={leftWidth}
+						height={innerHeight - headerHeight - metric(6)}
+						screen={screenProfile}
+						fill
+					/>
+				</div>
+				<HolidayPanel
+					{...holidayProps}
+					provinceName={provinceName}
+					rows={5}
+					width={rightWidth}
+					big
+				/>
+			</div>
+		);
+	} else if (kind === "half" && showHolidays) {
+		const headerHeight = metric(60);
+		const gridHeight =
+			gridPitch(screenProfile, innerWidth, innerHeight) * MONTHS;
+		body = (
+			<div
+				style={{
+					display: "flex",
+					flex: 1,
+					flexDirection: "column",
+					gap: metric(8),
+				}}
+			>
+				<div
+					style={{
+						display: "flex",
+						height: headerHeight,
+						alignItems: "flex-end",
+					}}
+				>
+					{headerRow(50, 14, innerWidth)}
+				</div>
+				<MonthGrid
+					months={months}
+					width={innerWidth}
+					height={gridHeight}
+					screen={screenProfile}
+				/>
+				<HolidayPanel
+					{...holidayProps}
+					provinceName={provinceName}
+					rows={3}
+					width={innerWidth}
+				/>
+			</div>
+		);
+	} else if (kind === "banner" && showHolidays) {
+		const leftWidth = Math.round(innerWidth * 0.33);
+		body = (
+			<div style={{ display: "flex", flex: 1, flexDirection: "row", gap }}>
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						justifyContent: "space-between",
+						width: leftWidth,
+					}}
+				>
+					{percentBlock(64)}
+					<div style={{ display: "flex", flexDirection: "column" }}>
+						<Text size={font(18)}>{`Day ${dayOfYear} of ${daysInYear}`}</Text>
+						<Text size={font(18)}>{`${daysLeft} days left`}</Text>
+					</div>
+					<ProgressBar
+						width={leftWidth}
+						height={metric(22)}
+						percent={percent}
+						screen={screenProfile}
+					/>
+				</div>
+				<HolidayCards {...holidayProps} count={3} />
+			</div>
+		);
+	} else if (kind === "quarter" && showHolidays) {
+		body = (
+			<div
+				style={{
+					display: "flex",
+					flex: 1,
+					flexDirection: "column",
+					gap: metric(6),
+				}}
+			>
+				{headerRow(40, 12, innerWidth)}
+				<ProgressBar
+					width={innerWidth}
+					height={metric(18)}
+					percent={percent}
+					screen={screenProfile}
+				/>
+				<HolidayPanel
+					{...holidayProps}
+					provinceName={provinceName}
+					rows={2}
+					width={innerWidth}
+					showTitle={false}
+				/>
+			</div>
+		);
+	} else if (kind === "full" || kind === "half") {
+		const percentSize = kind === "full" ? 92 : 64;
+		const headerHeight = Math.round(metric(percentSize) * 1.15);
+		body = (
+			<>
+				{headerRow(percentSize, kind === "full" ? 26 : 20, innerWidth)}
+				<MonthGrid
+					months={months}
+					width={innerWidth}
+					height={innerHeight - headerHeight - metric(8)}
+					screen={screenProfile}
+					fill
+				/>
+			</>
+		);
+	} else {
+		body = (
+			<>
+				{headerRow(
+					kind === "banner" ? 84 : 60,
+					kind === "banner" ? 26 : 20,
+					innerWidth,
+				)}
+				<div
+					style={{
+						display: "flex",
+						flex: 1,
+						alignItems: "center",
+						justifyContent: "center",
+					}}
+				>
+					<ProgressBar
+						width={innerWidth}
+						percent={percent}
+						screen={screenProfile}
+					/>
+				</div>
+			</>
+		);
+	}
 
 	return (
 		<PreSatori
 			width={screenProfile.logicalWidth}
 			height={screenProfile.logicalHeight}
 		>
-			<ScreenCanvas screen={screenProfile}>
-				{header}
-				{tall ? (
-					<MonthGrid
-						months={months}
-						width={innerWidth}
-						height={gridHeight}
-						screen={screenProfile}
-					/>
-				) : (
-					<div
-						style={{
-							display: "flex",
-							flex: 1,
-							alignItems: "center",
-							justifyContent: "center",
-						}}
-					>
-						<ProgressBar
-							width={innerWidth}
-							percent={percent}
-							screen={screenProfile}
-						/>
-					</div>
-				)}
-			</ScreenCanvas>
+			<ScreenCanvas screen={screenProfile}>{body}</ScreenCanvas>
 		</PreSatori>
 	);
 }
@@ -303,19 +340,43 @@ export const definition: RecipeDefinition<
 		slug: "year-progress",
 		title: "Year in Progress",
 		description:
-			"How much of the year has passed, as a percentage and a dot per day (one row per month). Uses the device's timezone for today's date.",
+			"How much of the year has passed, as a percentage and a dot per day (one row per month), with the next public holidays for a Canadian province beside it. Today's date uses the device's timezone.",
 		published: true,
-		tags: ["time", "year", "progress", "fork"],
+		tags: ["time", "year", "progress", "holidays", "canada", "fork"],
 		author: { name: "fork" },
 		category: "display-components",
-		version: "0.1.0",
+		version: "0.2.0",
 		createdAt: "2026-10-24T00:00:00Z",
 		updatedAt: "2026-10-24T00:00:00Z",
 	},
 	paramsSchema,
 	dataSchema,
-	getData: async (_params, context) =>
-		yearProgress(Date.now(), context?.deviceTimezone ?? DEFAULT_TIMEZONE),
+	getData: async (params, context) => {
+		const progress = yearProgress(
+			Date.now(),
+			context?.deviceTimezone ?? DEFAULT_TIMEZONE,
+		);
+		if (!params.showHolidays) {
+			const province = normalizeProvince(params.province);
+			return {
+				...progress,
+				showHolidays: false,
+				province,
+				provinceName: PROVINCE_NAMES[province],
+				holidays: [],
+				holidayError: "",
+			};
+		}
+		const holidays = await getPublicHolidays(params, context);
+		return {
+			...progress,
+			showHolidays: true,
+			province: holidays.province,
+			provinceName: holidays.provinceName,
+			holidays: holidays.holidays,
+			holidayError: holidays.error,
+		};
+	},
 	Component: ({ width, height, screen, data }) => (
 		<YearProgress {...data} width={width} height={height} screen={screen} />
 	),
