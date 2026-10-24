@@ -11,9 +11,9 @@ const cell = {
 } as const;
 
 /**
- * The strip drawn under every recipe: date on the left, fixed text in the
- * middle, battery on the right. `height` is the whole strip including the gap
- * below the outlined box, so the box lines up with recipe footers above it.
+ * The bar drawn flush along the bottom of every screen: a top border only,
+ * with the date on the left, fixed text in the middle and battery on the
+ * right. `height` is the whole bar including its border.
  */
 export function GlobalFooter({
 	parts,
@@ -27,48 +27,36 @@ export function GlobalFooter({
 	screen: ScreenProfile;
 }) {
 	const side = screenCanvasPadding(screen);
-	const bottomGap = Math.max(4, Math.round(height * 0.18));
-	const boxHeight = height - bottomGap;
-	const fontSize = Math.max(14, Math.round(boxHeight * 0.55));
+	const fontSize = Math.max(14, Math.round(height * 0.5));
 
 	return (
 		<div
 			className="font-inter"
 			style={{
 				display: "flex",
+				flexDirection: "row",
+				alignItems: "center",
 				width,
 				height,
 				boxSizing: "border-box",
-				padding: `0 ${side}px ${bottomGap}px`,
+				borderTop: `${BORDER}px solid #000`,
+				padding: `0 ${side}px`,
 				backgroundColor: "#fff",
 				color: "#000",
 				fontFamily: "inter",
+				fontSize,
+				lineHeight: 1,
+				gap: Math.round(height * 0.3),
 			}}
 		>
-			<div
-				style={{
-					display: "flex",
-					flex: 1,
-					flexDirection: "row",
-					alignItems: "center",
-					boxSizing: "border-box",
-					border: `${BORDER}px solid #000`,
-					borderRadius: Math.round(boxHeight * 0.35),
-					padding: `0 ${Math.round(boxHeight * 0.4)}px`,
-					fontSize,
-					lineHeight: 1,
-					gap: Math.round(boxHeight * 0.3),
-				}}
-			>
-				<div style={{ ...cell, flex: 1, justifyContent: "flex-start" }}>
-					{parts.left}
-				</div>
-				<div style={{ ...cell, flex: "none", maxWidth: "50%" }}>
-					{parts.center}
-				</div>
-				<div style={{ ...cell, flex: 1, justifyContent: "flex-end" }}>
-					{parts.right}
-				</div>
+			<div style={{ ...cell, flex: 1, justifyContent: "flex-start" }}>
+				{parts.left}
+			</div>
+			<div style={{ ...cell, flex: "none", maxWidth: "50%" }}>
+				{parts.center}
+			</div>
+			<div style={{ ...cell, flex: 1, justifyContent: "flex-end" }}>
+				{parts.right}
 			</div>
 		</div>
 	);
