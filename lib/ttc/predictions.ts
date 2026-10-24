@@ -8,6 +8,7 @@
 
 const FEED_URL = "https://webservices.umoiq.com/service/publicJSONFeed";
 const FETCH_TIMEOUT_MS = 10_000;
+const MAX_RESPONSE_CHARS = 1_000_000;
 
 export type TtcArrival = {
 	route: string;
@@ -15,6 +16,10 @@ export type TtcArrival = {
 	destination: string;
 	minutes: number;
 	seconds: number;
+	/** Predicted arrival as epoch milliseconds, when the feed provides it. */
+	epochMs?: number;
+	/** True for express routes (route title contains "Express"). */
+	express: boolean;
 };
 
 export type TtcPredictions = {
@@ -27,6 +32,11 @@ export type ParseOptions = {
 	routes?: readonly string[];
 	/** Maximum arrivals returned. */
 	limit?: number;
+	/**
+	 * Keep only the soonest N per route before the overall limit, so a frequent
+	 * route cannot crowd an infrequent one (e.g. an express) off the screen.
+	 */
+	perRouteLimit?: number;
 };
 
 type Dict = Record<string, unknown>;
@@ -57,13 +67,29 @@ function parseArrival(
 	if (!isDict(raw)) return null;
 	const seconds = Number(raw.seconds);
 	if (!Number.isFinite(seconds) || seconds < 0) return null;
+	const epochMs = Number(raw.epochTime);
 	return {
 		route: routeTag,
 		routeTitle,
 		destination: destinationFrom(directionTitle),
 		minutes: Math.floor(seconds / 60),
 		seconds,
+		epochMs: Number.isFinite(epochMs) && epochMs > 0 ? epochMs : undefined,
+		express: /express/i.test(routeTitle),
 	};
+}
+
+/** `arrivals` must already be sorted soonest first. */
+function takeSoonestPerRoute(
+	arrivals: readonly TtcArrival[],
+	perRoute: number,
+): TtcArrival[] {
+	const seen = new Map<string, number>();
+	return arrivals.filter((arrival) => {
+		const count = seen.get(arrival.route) ?? 0;
+		seen.set(arrival.route, count + 1);
+		return count < perRoute;
+	});
 }
 
 export function parseTtcPredictions(
@@ -101,9 +127,12 @@ export function parseTtcPredictions(
 	}
 
 	const sorted = [...arrivals].sort((a, b) => a.seconds - b.seconds);
+	const perRoute = options.perRouteLimit
+		? takeSoonestPerRoute(sorted, options.perRouteLimit)
+		: sorted;
 	return {
 		stopTitle,
-		arrivals: options.limit ? sorted.slice(0, options.limit) : sorted,
+		arrivals: options.limit ? perRoute.slice(0, options.limit) : perRoute,
 	};
 }
 
@@ -127,7 +156,11 @@ export async function fetchTtcPredictions(
 	if (!response.ok) {
 		throw new Error(`TTC feed responded with status ${response.status}`);
 	}
-	return parseTtcPredictions(await response.json(), parseOptions);
+	const body = await response.text();
+	if (body.length > MAX_RESPONSE_CHARS) {
+		throw new Error("TTC feed response is too large");
+	}
+	return parseTtcPredictions(JSON.parse(body), parseOptions);
 }
 
 export type TtcStopSection = TtcPredictions & {
