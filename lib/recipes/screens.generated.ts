@@ -24,6 +24,8 @@ export const reactRecipeLoaders: Record<string, RecipeModuleLoader> = {
 	"ttc-arrivals": () =>
 		import("../../app/(app)/recipes/screens/ttc-arrivals/ttc-arrivals"),
 	weather: () => import("../../app/(app)/recipes/screens/weather/weather"),
+	"weather-yin": () =>
+		import("../../app/(app)/recipes/screens/weather-yin/weather-yin"),
 	wikipedia: () =>
 		import("../../app/(app)/recipes/screens/wikipedia/wikipedia"),
 };
@@ -40,6 +42,7 @@ export const reactRecipeSlugs = [
 	"simple-text",
 	"ttc-arrivals",
 	"weather",
+	"weather-yin",
 	"wikipedia",
 ] as const;
 

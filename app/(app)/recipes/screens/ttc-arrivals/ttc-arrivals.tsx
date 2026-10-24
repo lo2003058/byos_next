@@ -10,6 +10,7 @@ import {
 	DEFAULT_IMAGE_WIDTH,
 } from "@/lib/recipes/constants";
 import type { RecipeDefinition } from "@/lib/recipes/types";
+import { outlineFooterStyle } from "@/lib/trmnl/outline-footer";
 import {
 	createScreenProfile,
 	type ScreenProfile,
@@ -166,9 +167,10 @@ function SectionView({
 								minWidth: screenMetric(screen, dense ? 78 : 96),
 								padding: `${screenMetric(screen, 1)}px ${screenMetric(screen, 8)}px`,
 								borderRadius: screenMetric(screen, 8),
-								backgroundColor: arrival.express ? "#fff" : "#000",
-								color: arrival.express ? "#000" : "#fff",
-								border: `${Math.max(2, screenMetric(screen, 3))}px solid #000`,
+								backgroundColor: "#fff",
+								color: "#000",
+								// Express is told apart by a heavier outline, not a fill.
+								border: `${Math.max(2, screenMetric(screen, arrival.express ? 6 : 3))}px solid #000`,
 								fontSize: routeFont,
 								fontFamily: BOLD_FONT,
 								fontWeight: 400,
@@ -299,7 +301,7 @@ export default function TtcArrivals({
 					screen={screenProfile}
 					left="TTC live arrivals"
 					right={updatedAt ? `Updated ${updatedAt}` : undefined}
-					style={{ backgroundColor: "#000" }}
+					style={outlineFooterStyle()}
 				/>
 			</ScreenCanvas>
 		</PreSatori>
