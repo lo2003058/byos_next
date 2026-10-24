@@ -12,6 +12,7 @@ import {
 } from "@/lib/recipes/constants";
 import type { RecipeDefinition } from "@/lib/recipes/types";
 import { to24Hour } from "@/lib/time/to-24-hour";
+import { updatedLabel } from "@/lib/time/updated-label";
 import { outlineFooterStyle } from "@/lib/trmnl/outline-footer";
 import {
 	createScreenProfile,
@@ -234,6 +235,7 @@ export default function WeatherYin({
 		return CloudIcon; // default
 	};
 
+	const updated = updatedLabel(lastUpdated);
 	const layout = weatherLayout(screenProfile);
 	const shownStats = weatherStats.slice(0, layout.maxStats);
 	const isHalfScreen = layout.kind === "half";
@@ -330,8 +332,8 @@ export default function WeatherYin({
 					{!isBanner && shownStats.length > 0 ? statsGrid : null}
 					<ScreenFooter
 						screen={screenProfile}
-						left={location || lastUpdated}
-						right={location ? lastUpdated || undefined : undefined}
+						left={location || updated}
+						right={location ? updated || undefined : undefined}
 						style={outlineFooterStyle()}
 					/>
 				</div>
@@ -385,8 +387,8 @@ export default function WeatherYin({
 					)}
 					<ScreenFooter
 						screen={screenProfile}
-						left={location || lastUpdated}
-						right={location ? lastUpdated || undefined : undefined}
+						left={location || updated}
+						right={location ? updated || undefined : undefined}
 						style={outlineFooterStyle()}
 					/>
 				</div>
