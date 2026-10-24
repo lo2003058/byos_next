@@ -5,7 +5,7 @@ const now = Date.UTC(2026, 9, 24, 15, 30);
 const on = {
 	enabled: true,
 	text: "Yin's board",
-	dateFormat: "short",
+	dateFormat: "MMM D",
 	batteryFormat: "percent",
 } as const;
 const ctx = {

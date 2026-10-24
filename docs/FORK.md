@@ -95,8 +95,8 @@ battery right. Off by default. Code: `lib/footer/*`, applied in
 device edit page, Content tab.
 
 Needs migrations `0022_add_global_footer.sql` (four `devices` columns) and
-`0023_footer_date_format_dmy.sql` (allows the `24-Oct-2026` format; run it after
-0022). Run each once on Supabase (SQL Editor, paste the file). Until then the code treats the
+`0023_footer_date_format_dmy.sql` (allows the date format patterns such as
+`DD-MMM-YYYY`; run it after 0022, safe to re-run). Run each once on Supabase (SQL Editor, paste the file). Until then the code treats the
 columns as missing, so the footer is simply off; only saving the footer
 settings fails.
 

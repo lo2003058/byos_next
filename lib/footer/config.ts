@@ -1,12 +1,24 @@
 import { z } from "zod";
 
+/** The stored value is the pattern itself (YYYY year, MM month, DD day, MMM month name, ddd weekday). */
 export const DATE_FORMATS = [
 	"none",
-	"short", // Oct 24
-	"weekday-short", // Sat, Oct 24
-	"iso", // 2026-10-24
-	"dmy", // 24-Oct-2026
+	"YYYY-MM-DD",
+	"YYYY-DD-MM",
+	"DD-MM-YYYY",
+	"MM-DD-YYYY",
+	"DD-MMM-YYYY",
+	"MMM D",
+	"ddd, MMM D",
 ] as const;
+
+/** Values stored before the pattern names, still read as their pattern. */
+const LEGACY_DATE_FORMATS: Record<string, (typeof DATE_FORMATS)[number]> = {
+	short: "MMM D",
+	"weekday-short": "ddd, MMM D",
+	iso: "YYYY-MM-DD",
+	dmy: "DD-MMM-YYYY",
+};
 
 export const BATTERY_FORMATS = [
 	"none",
@@ -20,10 +32,13 @@ export type FooterBatteryFormat = (typeof BATTERY_FORMATS)[number];
 
 export const DATE_FORMAT_LABELS: Record<FooterDateFormat, string> = {
 	none: "Hidden",
-	short: "Oct 24",
-	"weekday-short": "Sat, Oct 24",
-	iso: "2026-10-24",
-	dmy: "24-Oct-2026",
+	"YYYY-MM-DD": "YYYY-MM-DD",
+	"YYYY-DD-MM": "YYYY-DD-MM",
+	"DD-MM-YYYY": "DD-MM-YYYY",
+	"MM-DD-YYYY": "MM-DD-YYYY",
+	"DD-MMM-YYYY": "DD-MMM-YYYY",
+	"MMM D": "MMM D",
+	"ddd, MMM D": "ddd, MMM D",
 };
 
 /** Battery formats offered in the UI. `icon-percent` is kept only so stored values still read. */
@@ -71,7 +86,12 @@ export function normalizeFooterConfig(row: FooterColumns): FooterConfig {
 	return {
 		enabled: row.global_footer_enabled === true,
 		text: (row.global_footer_text ?? "").slice(0, FOOTER_TEXT_MAX_LENGTH),
-		dateFormat: pick(DATE_FORMATS, row.global_footer_date_format, "none"),
+		dateFormat: pick(
+			DATE_FORMATS,
+			LEGACY_DATE_FORMATS[row.global_footer_date_format ?? ""] ??
+				row.global_footer_date_format,
+			"none",
+		),
 		batteryFormat: pick(
 			BATTERY_FORMATS,
 			row.global_footer_battery_format,

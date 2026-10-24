@@ -37,13 +37,23 @@ describe("mapDeviceRow", () => {
 			display_mode: "screen",
 			global_footer_enabled: true,
 			global_footer_text: "Yin's board",
-			global_footer_date_format: "iso",
+			global_footer_date_format: "DD-MMM-YYYY",
 			global_footer_battery_format: "voltage",
 		});
 
 		expect(device.global_footer_enabled).toBe(true);
 		expect(device.global_footer_text).toBe("Yin's board");
-		expect(device.global_footer_date_format).toBe("iso");
+		expect(device.global_footer_date_format).toBe("DD-MMM-YYYY");
 		expect(device.global_footer_battery_format).toBe("voltage");
+	});
+
+	it("reads a date format stored before the pattern names", () => {
+		const device = mapDeviceRow({
+			id: 1,
+			display_mode: "screen",
+			global_footer_date_format: "iso",
+		});
+
+		expect(device.global_footer_date_format).toBe("YYYY-MM-DD");
 	});
 });

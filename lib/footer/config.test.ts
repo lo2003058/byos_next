@@ -23,15 +23,26 @@ describe("normalizeFooterConfig", () => {
 			normalizeFooterConfig({
 				global_footer_enabled: true,
 				global_footer_text: "Yin's board",
-				global_footer_date_format: "weekday-short",
+				global_footer_date_format: "ddd, MMM D",
 				global_footer_battery_format: "percent",
 			}),
 		).toEqual({
 			enabled: true,
 			text: "Yin's board",
-			dateFormat: "weekday-short",
+			dateFormat: "ddd, MMM D",
 			batteryFormat: "percent",
 		});
+	});
+
+	it.each([
+		["short", "MMM D"],
+		["weekday-short", "ddd, MMM D"],
+		["iso", "YYYY-MM-DD"],
+		["dmy", "DD-MMM-YYYY"],
+	])("reads the earlier stored value %s as %s", (stored, expected) => {
+		expect(
+			normalizeFooterConfig({ global_footer_date_format: stored }).dateFormat,
+		).toBe(expected);
 	});
 
 	it("falls back to none for an unknown format", () => {
