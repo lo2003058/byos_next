@@ -7,6 +7,7 @@ import {
 } from "@/lib/database/scoped-db";
 import { checkDbConnection } from "@/lib/database/utils";
 import { resolveDeviceProfileForRequest } from "@/lib/device/device-profile-request";
+import { noStoreImageResponse } from "@/lib/device/no-store-response";
 import { parseRequestHeaders } from "@/lib/device/request-headers";
 import { getLayoutById, type LayoutSlot } from "@/lib/mixup/constants";
 import {
@@ -19,7 +20,6 @@ import { renderDeviceImage } from "@/lib/render/device-image";
 import { stripImageExtension } from "@/lib/render/device-image-url";
 import { renderErrorImage } from "@/lib/render/error-image";
 import { parseImageRequest } from "@/lib/render/image-request";
-import { imageResponse } from "@/lib/render/image-response";
 import type { DeviceProfile } from "@/lib/trmnl/device-profile";
 
 export async function GET(
@@ -52,7 +52,7 @@ export async function GET(
 				width,
 				height,
 			});
-			return imageResponse(image, 503);
+			return noStoreImageResponse(image, 503);
 		}
 
 		// Two auth paths:
@@ -156,14 +156,14 @@ export async function GET(
 		);
 		const image = await renderDeviceImage({ png: compositedPng, profile });
 
-		return imageResponse(image);
+		return noStoreImageResponse(image);
 	} catch (error) {
 		logger.error("Error generating mixup image:", error);
 		const image = await renderErrorImage({
 			message:
 				error instanceof Error ? error.message : "Error generating image",
 		});
-		return imageResponse(image, 500);
+		return noStoreImageResponse(image, 500);
 	}
 }
 

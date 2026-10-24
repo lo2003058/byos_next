@@ -4,6 +4,7 @@ import {
 	resolveDeviceProfileForRequest,
 	resolveDeviceProfileOrNull,
 } from "@/lib/device/device-profile-request";
+import { noStoreImageResponse } from "@/lib/device/no-store-response";
 import {
 	parseRequestHeaders,
 	resolveUserIdFromApiKey,
@@ -20,7 +21,6 @@ import {
 	parseImageRequest,
 	rejectOversizedImageArea,
 } from "@/lib/render/image-request";
-import { imageResponse } from "@/lib/render/image-response";
 
 export async function GET(
 	req: NextRequest,
@@ -65,7 +65,7 @@ export async function GET(
 				height: imageHeight,
 				profile,
 			});
-			return imageResponse(image);
+			return noStoreImageResponse(image);
 		}
 
 		const imageWidth = imageRequest.width ?? profile.model.width;
@@ -90,10 +90,10 @@ export async function GET(
 				height: imageHeight,
 				profile,
 			});
-			return imageResponse(errorImage, 500);
+			return noStoreImageResponse(errorImage, 500);
 		}
 
-		return imageResponse(image);
+		return noStoreImageResponse(image);
 	} catch (error) {
 		logger.error("Error generating image:", error);
 		const { searchParams } = new URL(req.url);
@@ -121,6 +121,6 @@ export async function GET(
 			height,
 			profile,
 		});
-		return imageResponse(errorImage, 500);
+		return noStoreImageResponse(errorImage, 500);
 	}
 }
