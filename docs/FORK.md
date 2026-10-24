@@ -120,6 +120,19 @@ and `weather-yin` uses the matching city from `lib/geo/timezone-location.ts`
 override it. Web previews have no device, so they use the default city
 (Toronto).
 
+### Fork-only recipes and writing recipes here
+
+Fork recipes: `ttc-arrivals`, `weather-yin`, `year-progress`, `public-holidays`.
+Each adapts to the four mixup slot shapes through `lib/trmnl/slot-kind.ts`
+(full, half, banner, quarter). `getData(params, { deviceTimezone })` gets the
+device timezone when the image is fetched by a device (not in web previews).
+
+Font gotcha: `utils/pre-satori.tsx` gives every element a default pixel font
+(`blockkie`) unless its `className` has a `font-*` class, and it injects that
+into `style` too. Use `className="font-inter"` (or `font-interBold` for the
+real bold cut) on text elements, and when a wrapper component spreads a `style`
+prop, set `fontFamily` after the spread.
+
 ## Syncing with upstream
 
 ```bash
