@@ -49,7 +49,7 @@ jobs:
           export-env: true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          DATABASE_URL: "op://BYOS/BYOS-next/DATABASE_URL"
+          DATABASE_URL: "op://7bp5z4r2xyzha6aactkrobqxye/BYOS-next/DATABASE_URL"
 
       - run: corepack enable
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -79,11 +79,11 @@ jobs:
           export-env: true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          DATABASE_URL: "op://BYOS/BYOS-next/DATABASE_URL"
-          BETTER_AUTH_SECRET: "op://BYOS/BYOS-next/BETTER_AUTH_SECRET"
-          WIF_PROVIDER: "op://BYOS/BYOS-next/WIF_PROVIDER"
-          GCP_DEPLOY_SA_EMAIL: "op://BYOS/BYOS-next/GCP_DEPLOY_SA_EMAIL"
-          GCP_RUNTIME_SA_EMAIL: "op://BYOS/BYOS-next/GCP_RUNTIME_SA_EMAIL"
+          DATABASE_URL: "op://7bp5z4r2xyzha6aactkrobqxye/BYOS-next/DATABASE_URL"
+          BETTER_AUTH_SECRET: "op://7bp5z4r2xyzha6aactkrobqxye/BYOS-next/BETTER_AUTH_SECRET"
+          WIF_PROVIDER: "op://7bp5z4r2xyzha6aactkrobqxye/BYOS-next/WIF_PROVIDER"
+          GCP_DEPLOY_SA_EMAIL: "op://7bp5z4r2xyzha6aactkrobqxye/BYOS-next/GCP_DEPLOY_SA_EMAIL"
+          GCP_RUNTIME_SA_EMAIL: "op://7bp5z4r2xyzha6aactkrobqxye/BYOS-next/GCP_RUNTIME_SA_EMAIL"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
