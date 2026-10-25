@@ -11,7 +11,7 @@ spec:
     metadata:
       annotations:
         autoscaling.knative.dev/minScale: "0"
-        autoscaling.knative.dev/maxScale: "2"
+        autoscaling.knative.dev/maxScale: "1"
     spec:
       timeoutSeconds: 60
       containers:
@@ -21,7 +21,7 @@ spec:
           resources:
             limits:
               cpu: "1"
-              memory: 1Gi
+              memory: 512Mi
           startupProbe:
             httpGet:
               path: /
