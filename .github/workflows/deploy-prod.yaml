@@ -1,0 +1,132 @@
+name: Deploy to Cloud Run (prod)
+
+# Single environment: pushing to the `prod` branch (or running this by hand)
+# tests, migrates the database, then deploys to Cloud Run.
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GCP_PROJECT_ID: my-side-projects-462703
+  GCP_REGION: us-east4
+  AR_REPO: byos
+  IMAGE_NAME: byos-next
+  CLOUD_RUN_SERVICE: byos-next
+  APP_URL: https://byos.iamyin.me
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: corepack enable
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
+          cache: yarn
+      - run: yarn install --immutable
+      - run: yarn lint
+      - run: yarn typecheck
+      - run: yarn test
+
+  migrate:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Load secrets from 1Password
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          DATABASE_URL: "op://3ii2ofq37qrdnyghttxufvuqpy/BYOS-next/DATABASE_URL"
+
+      - run: corepack enable
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
+          cache: yarn
+      - run: yarn install --immutable
+
+      # Same ledger (schema_migrations) as the in-app Initialize button.
+      - name: Run database migrations
+        run: node scripts/migrate.js
+
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE: us-east4-docker.pkg.dev/my-side-projects-462703/byos/byos-next
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Load secrets from 1Password
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          DATABASE_URL: "op://3ii2ofq37qrdnyghttxufvuqpy/BYOS-next/DATABASE_URL"
+          BETTER_AUTH_SECRET: "op://3ii2ofq37qrdnyghttxufvuqpy/BYOS-next/BETTER_AUTH_SECRET"
+          WIF_PROVIDER: "op://3ii2ofq37qrdnyghttxufvuqpy/BYOS-next/WIF_PROVIDER"
+          GCP_DEPLOY_SA_EMAIL: "op://3ii2ofq37qrdnyghttxufvuqpy/BYOS-next/GCP_DEPLOY_SA_EMAIL"
+          GCP_RUNTIME_SA_EMAIL: "op://3ii2ofq37qrdnyghttxufvuqpy/BYOS-next/GCP_RUNTIME_SA_EMAIL"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SA_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Authenticate Docker to Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.IMAGE }}:${{ github.sha }} \
+            -t ${{ env.IMAGE }}:latest \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+          docker push ${{ env.IMAGE }}:latest
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.CLOUD_RUN_SERVICE }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.IMAGE }}:${{ github.sha }}
+          flags: |
+            --min-instances=0
+            --max-instances=2
+            --memory=1Gi
+            --cpu=1
+            --timeout=60
+            --port=3000
+            --allow-unauthenticated
+            --service-account=${{ env.GCP_RUNTIME_SA_EMAIL }}
+          env_vars: |
+            NODE_ENV=production
+            REACT_RENDERER=takumi
+            AUTH_ENABLED=true
+            BETTER_AUTH_URL=${{ env.APP_URL }}
+            BETTER_AUTH_SECRET=${{ env.BETTER_AUTH_SECRET }}
+            DATABASE_URL=${{ env.DATABASE_URL }}
