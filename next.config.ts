@@ -24,7 +24,7 @@ if (existsSync("node_modules/puppeteer")) {
 }
 
 const nextConfig: NextConfig = {
-	allowedDevOrigins: ["dev.iamyin.me"],
+    allowedDevOrigins: ["byos.iamyin.me", "dev.iamyin.me"],
 	/* config options here */
 	trailingSlash: false,
 	skipTrailingSlashRedirect: true,
