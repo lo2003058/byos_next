@@ -78,6 +78,12 @@ CMD ["node", "server.js"]
 # Default production image: Node only, for the Takumi/Satori renderers (no Chrome)
 FROM base AS runner
 
+# sharp renders SVG text (e.g. the claim-code and error screens) with system
+# fonts; without any installed every glyph comes out as an empty box.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd -g 1001 nodejs \
     && useradd -u 1001 -g nodejs -s /bin/false -m nextjs
 
