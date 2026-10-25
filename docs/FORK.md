@@ -134,6 +134,17 @@ into `style` too. Use `className="font-inter"` (or `font-interBold` for the
 real bold cut) on text elements, and when a wrapper component spreads a `style`
 prop, set `fontFamily` after the spread.
 
+## Deploying to Cloud Run
+
+`.github/workflows/deploy-prod.yaml` runs on push to the `prod` branch (or by hand): `test` (lint, typecheck, jest) -> `migrate` (`node scripts/migrate.js`) -> `deploy` (docker build, push to Artifact Registry, Cloud Run). Secrets come from 1Password (`1password/load-secrets-action`); GCP login uses Workload Identity Federation. Only `OP_SERVICE_ACCOUNT_TOKEN` is a GitHub secret.
+
+- Project `my-side-projects-462703`, region `us-east4` (next to the Supabase `us-east-1` pooler), Artifact Registry repo `byos`, service `byos-next`, public URL `https://byos.iamyin.me`.
+- 1Password item `BYOS-next` (vault `3ii2ofq37qrdnyghttxufvuqpy`) needs: `DATABASE_URL` (Supabase **Session pooler**, port 5432), `BETTER_AUTH_SECRET`, `WIF_PROVIDER`, `GCP_DEPLOY_SA_EMAIL`, `GCP_RUNTIME_SA_EMAIL`.
+- The Dockerfile's default target is a Node-only image (Takumi/Satori renderers, no Chrome). Use `--target runner-browser` for `REACT_RENDERER=browser`.
+- `scripts/migrate.js` applies `migrations/*.sql` in order and records them in `schema_migrations` with the same names/checksums as the in-app Initialize button. A migration that was run by hand but never recorded would be applied again, so check the ledger before the first run.
+- `yarn.lock` must be produced by the pinned Yarn (`packageManager` in `package.json`, via `corepack enable`); a different Yarn rewrites the `resolve` patch hash and `yarn install --immutable` fails in Docker/CI.
+- The Cloud Run service is public (devices call `/api/setup`, `/api/display`, `/api/bitmap/*`, `/api/log` without a browser session); the dashboard is protected by Better Auth (`AUTH_ENABLED=true`).
+
 ## Syncing with upstream
 
 ```bash

@@ -31,8 +31,8 @@ COPY . .
 RUN yarn build \
     && rm -rf node_modules/.cache
 
-# Production image - chromedp/headless-shell for minimal Chrome footprint
-FROM chromedp/headless-shell:146.0.7655.3 AS runner
+# Browser-renderer image (REACT_RENDERER=browser): build with `--target runner-browser`
+FROM chromedp/headless-shell:146.0.7655.3 AS runner-browser
 
 WORKDIR /app
 
@@ -73,4 +73,29 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 ENTRYPOINT []
+CMD ["node", "server.js"]
+
+# Default production image: Node only, for the Takumi/Satori renderers (no Chrome)
+FROM base AS runner
+
+RUN groupadd -g 1001 nodejs \
+    && useradd -u 1001 -g nodejs -s /bin/false -m nextjs
+
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# CI migration runner (`node scripts/migrate.js`) and the SQL it applies
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate.js ./scripts/migrate.js
+COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
+
+RUN mkdir -p .next/cache \
+    && chown -R nextjs:nodejs .next
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
 CMD ["node", "server.js"]
