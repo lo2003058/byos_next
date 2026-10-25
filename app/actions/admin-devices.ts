@@ -116,7 +116,25 @@ export async function deleteDeviceAdmin(
 	if (!ready) return { success: false, error: "Database not available" };
 
 	try {
-		await db.deleteFrom("devices").where("id", "=", String(deviceId)).execute();
+		// logs.friendly_id references devices without ON DELETE CASCADE, so the
+		// device's logs have to go first.
+		await db.transaction().execute(async (trx) => {
+			const device = await trx
+				.selectFrom("devices")
+				.select("friendly_id")
+				.where("id", "=", String(deviceId))
+				.executeTakeFirst();
+			if (!device) return;
+
+			await trx
+				.deleteFrom("logs")
+				.where("friendly_id", "=", device.friendly_id)
+				.execute();
+			await trx
+				.deleteFrom("devices")
+				.where("id", "=", String(deviceId))
+				.execute();
+		});
 		return { success: true };
 	} catch (error) {
 		return {
