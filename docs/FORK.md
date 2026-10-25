@@ -139,7 +139,7 @@ prop, set `fontFamily` after the spread.
 `.github/workflows/deploy-prod.yaml` runs on push to the `prod` branch (or by hand): `test` (lint, typecheck, jest) -> `migrate` (`node scripts/migrate.js`) -> `deploy` (docker build, push to Artifact Registry, Cloud Run). Secrets come from 1Password (`1password/load-secrets-action`); GCP login uses Workload Identity Federation. Only `OP_SERVICE_ACCOUNT_TOKEN` is a GitHub secret.
 
 - Project `my-side-projects-462703`, region `us-east4` (next to the Supabase `us-east-1` pooler), Artifact Registry repo `byos`, service `byos-next`, public URL `https://byos.iamyin.me`.
-- 1Password item `BYOS-next` (vault `3ii2ofq37qrdnyghttxufvuqpy`) needs: `DATABASE_URL` (Supabase **Session pooler**, port 5432), `BETTER_AUTH_SECRET`, `WIF_PROVIDER`, `GCP_DEPLOY_SA_EMAIL`, `GCP_RUNTIME_SA_EMAIL`.
+- 1Password item `BYOS-next` (vault `BYOS`, dedicated to this repo, with its own read-only service account) needs: `DATABASE_URL` (Supabase **Session pooler**, port 5432), `BETTER_AUTH_SECRET`, `WIF_PROVIDER`, `GCP_DEPLOY_SA_EMAIL`, `GCP_RUNTIME_SA_EMAIL`.
 - The Dockerfile's default target is a Node-only image (Takumi/Satori renderers, no Chrome). Use `--target runner-browser` for `REACT_RENDERER=browser`.
 - `scripts/migrate.js` applies `migrations/*.sql` in order and records them in `schema_migrations` with the same names/checksums as the in-app Initialize button. A migration that was run by hand but never recorded would be applied again, so check the ledger before the first run.
 - `yarn.lock` must be produced by the pinned Yarn (`packageManager` in `package.json`, via `corepack enable`); a different Yarn rewrites the `resolve` patch hash and `yarn install --immutable` fails in Docker/CI.
