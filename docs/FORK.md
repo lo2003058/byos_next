@@ -140,7 +140,7 @@ prop, set `fontFamily` after the spread.
 
 - Project `my-side-projects-462703`, region `us-east4` (next to the Supabase `us-east-1` pooler), Artifact Registry repo `byos`, service `byos-next`, public URL `https://byos.iamyin.me`.
 - 1Password item `BYOS-next` (vault `7bp5z4r2xyzha6aactkrobqxye`, dedicated to this repo, with its own read-only service account) needs: `DATABASE_URL` (Supabase **Session pooler**, port 5432), `BETTER_AUTH_SECRET`, `WIF_PROVIDER`, `GCP_DEPLOY_SA_EMAIL`, `GCP_RUNTIME_SA_EMAIL`.
-- The Dockerfile's default target is a Node-only image (Takumi/Satori renderers, no Chrome). Use `--target runner-browser` for `REACT_RENDERER=browser`.
+- The Dockerfile's default target is a Node-only image (Takumi/Satori renderers, no Chrome) plus `fonts-liberation`: sharp draws the SVG text of the claim-code/error screens with system fonts, and without any every glyph is an empty box. Use `--target runner-browser` for `REACT_RENDERER=browser`.
 - `scripts/migrate.js` applies `migrations/*.sql` in order and records them in `schema_migrations` with the same names/checksums as the in-app Initialize button. A migration that was run by hand but never recorded would be applied again, so check the ledger before the first run.
 - `yarn.lock` must be produced by the pinned Yarn (`packageManager` in `package.json`, via `corepack enable`); a different Yarn rewrites the `resolve` patch hash and `yarn install --immutable` fails in Docker/CI.
 - The Cloud Run service is public (devices call `/api/setup`, `/api/display`, `/api/bitmap/*`, `/api/log` without a browser session); the dashboard is protected by Better Auth (`AUTH_ENABLED=true`).
