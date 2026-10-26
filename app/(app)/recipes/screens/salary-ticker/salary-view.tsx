@@ -15,6 +15,7 @@ import {
 import { slotKind } from "@/lib/trmnl/slot-kind";
 import { PreSatori } from "@/utils/pre-satori";
 import { Text } from "../year-progress/ui";
+import { CryingFace } from "./crying-face";
 import { formatMoney, formatRate } from "./format";
 import { parseTime } from "./pay";
 import type { SalaryData } from "./salary-ticker";
@@ -87,12 +88,10 @@ export default function SalaryTicker({
 				gap: metric(12),
 			}}
 		>
-			<Text size={font(size * 0.7)} bold style={{ lineHeight: 1 }}>
+			<Text size={font(size * 0.7)} bold style={{ lineHeight: 1.3 }}>
 				Congratulations
 			</Text>
-			<Text size={font(size * 0.7)} style={{ lineHeight: 1 }}>
-				😭
-			</Text>
+			<CryingFace size={font(size * 0.9)} />
 		</div>
 	);
 
