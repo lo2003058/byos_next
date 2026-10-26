@@ -36,7 +36,7 @@ export function DayPicker({
 	).length;
 
 	return (
-		<div className="inline-flex flex-col gap-2" id={id}>
+		<div className="flex w-full flex-col gap-2" id={id}>
 			<div className="flex items-center justify-between gap-2">
 				<Button
 					type="button"
@@ -73,7 +73,7 @@ export function DayPicker({
 					cell ? (
 						<label
 							key={cell.date}
-							className={`flex h-8 w-9 cursor-pointer items-center justify-center rounded-md border text-sm ${
+							className={`flex h-8 w-full cursor-pointer items-center justify-center rounded-md border text-sm ${
 								picked.includes(cell.date)
 									? "border-primary bg-primary text-primary-foreground"
 									: "hover:bg-muted"
