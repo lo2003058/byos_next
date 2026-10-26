@@ -81,21 +81,33 @@ export default function SalaryTicker({
 		<div
 			style={{
 				display: "flex",
-				flexDirection: "row",
+				flexDirection: "column",
 				alignItems: "center",
-				justifyContent: "center",
-				gap: metric(12),
+				gap: metric(4),
 			}}
 		>
-			<Text size={font(size * 0.7)} bold style={{ lineHeight: 1.3 }}>
-				Congratulations
-			</Text>
-			<Text
-				size={font(size * 0.7)}
-				family="notoEmoji"
-				style={{ lineHeight: 1.3 }}
+			<div
+				style={{
+					display: "flex",
+					flexDirection: "row",
+					alignItems: "center",
+					justifyContent: "center",
+					gap: metric(12),
+				}}
 			>
-				😭
+				<Text size={font(size * 0.7)} bold style={{ lineHeight: 1.3 }}>
+					Congratulations
+				</Text>
+				<Text
+					size={font(size * 0.7)}
+					family="notoEmoji"
+					style={{ lineHeight: 1.3 }}
+				>
+					😭
+				</Text>
+			</div>
+			<Text size={font(size * 0.4, 16)} style={{ lineHeight: 1.3 }}>
+				You worked hard today.
 			</Text>
 		</div>
 	);
