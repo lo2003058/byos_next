@@ -158,6 +158,34 @@ describe("definition.getData", () => {
 		);
 	});
 
+	it("leaves days off out of the pay and the day state", async () => {
+		jest.useFakeTimers().setSystemTime(Date.UTC(2026, 9, 21, 12, 0));
+		try {
+			const run = async (daysOff: string) =>
+				definition.getData?.(
+					definition.paramsSchema.parse({
+						payType: "daily",
+						amount: 900,
+						daysOff,
+						startTime: "00:00",
+						endTime: "23:30",
+					}),
+					{ deviceTimezone: "UTC" } as never,
+				);
+			const worked = await run("");
+			const off = await run("2026-10-21, 2026-10-01, junk");
+			expect(worked?.dayState).not.toBe("off");
+			expect(off?.dayState).toBe("off");
+			expect(off?.today.gross).toBe(0);
+			// Two fewer paid days in October: the 1st and today.
+			expect(
+				(worked?.month.gross ?? 0) - (off?.month.gross ?? 0),
+			).toBeGreaterThan(900);
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
 	it("falls back to Ontario for an unknown province", async () => {
 		const params = definition.paramsSchema.parse({ province: "ZZ" });
 		const result = await definition.getData?.(params, {

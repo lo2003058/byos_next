@@ -3,6 +3,7 @@
 import { AlertCircle, Check, Save } from "lucide-react";
 import type { ChangeEvent } from "react";
 import { useMemo, useState, useTransition } from "react";
+import { DayPicker } from "@/components/recipes/day-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,6 +80,15 @@ const renderStringInput = (
 					))}
 				</SelectContent>
 			</Select>
+		);
+	}
+	if (input.kind === "dates") {
+		return (
+			<DayPicker
+				id={key}
+				value={text}
+				onChange={(next) => onChange(key, next)}
+			/>
 		);
 	}
 	const picked = weekdaysFrom(text);

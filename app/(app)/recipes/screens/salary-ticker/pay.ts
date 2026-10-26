@@ -1,3 +1,4 @@
+import { isoDate } from "@/lib/recipes/day-picker";
 import { WEEKDAYS, weekdaysFrom } from "@/lib/recipes/weekdays";
 
 export type PayType = "hourly" | "daily" | "monthly" | "annual";
@@ -13,6 +14,8 @@ export type PayConfig = {
 	endMinutes: number;
 	/** Unpaid minutes inside the working day. */
 	breakMinutes: number;
+	/** Dates ("2026-10-05") you did not work, on top of the days off each week. */
+	daysOff?: string[];
 };
 
 export type Earnings = { today: number; week: number; month: number };
@@ -77,16 +80,29 @@ function localNow(epochMs: number, timezone: string): LocalNow {
 	};
 }
 
-function workDaysInMonth(
+/** Whether you work on this date: a work day of the week that is not a day off. */
+function isWorkday(
+	config: PayConfig,
 	year: number,
 	month: number,
-	workDays: number[],
+	day: number,
+): boolean {
+	const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+	return (
+		config.workDays.includes(weekday) &&
+		!config.daysOff?.includes(isoDate(year, month, day))
+	);
+}
+
+function workDaysInMonth(
+	config: PayConfig,
+	year: number,
+	month: number,
 ): number {
 	const total = new Date(Date.UTC(year, month, 0)).getUTCDate();
 	let count = 0;
 	for (let day = 1; day <= total; day++) {
-		const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
-		if (workDays.includes(weekday)) count++;
+		if (isWorkday(config, year, month, day)) count++;
 	}
 	return count;
 }
@@ -106,7 +122,7 @@ function dayPay(config: PayConfig, year: number, month: number): number {
 		case "daily":
 			return config.amount;
 		default: {
-			const days = workDaysInMonth(year, month, config.workDays);
+			const days = workDaysInMonth(config, year, month);
 			const monthly =
 				config.payType === "annual" ? config.amount / 12 : config.amount;
 			return days === 0 ? 0 : monthly / days;
@@ -145,10 +161,11 @@ export function earnings(
 	const first = Math.min(mondayUtc, monthStartUtc);
 	for (let at = first; at <= todayUtc; at += DAY_MS) {
 		const date = new Date(at);
-		if (!config.workDays.includes(date.getUTCDay())) continue;
+		const year = date.getUTCFullYear();
+		const monthNumber = date.getUTCMonth() + 1;
+		if (!isWorkday(config, year, monthNumber, date.getUTCDate())) continue;
 		const share = at === todayUtc ? elapsedShare(config, now.minutes) : 1;
-		const pay =
-			dayPay(config, date.getUTCFullYear(), date.getUTCMonth() + 1) * share;
+		const pay = dayPay(config, year, monthNumber) * share;
 		if (at === todayUtc) today = pay;
 		if (at >= mondayUtc) week += pay;
 		if (at >= monthStartUtc) month += pay;
@@ -171,10 +188,7 @@ export function workdayProgress(
 	timezone: string,
 ): WorkdayProgress {
 	const now = localNow(epochMs, timezone);
-	const weekday = new Date(
-		Date.UTC(now.year, now.month - 1, now.day),
-	).getUTCDay();
-	if (!config.workDays.includes(weekday)) {
+	if (!isWorkday(config, now.year, now.month, now.day)) {
 		return { state: "off", percent: 0, minutesLeft: 0 };
 	}
 	const share = elapsedShare(config, now.minutes);

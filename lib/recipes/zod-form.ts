@@ -18,7 +18,9 @@ export type RecipeParamOption = { value: string; label: string };
 export type RecipeParamInput =
 	| { kind: "select"; options: RecipeParamOption[] }
 	/** Day checkboxes, saved as a list like "Mon,Tue,Wed". */
-	| { kind: "weekdays" };
+	| { kind: "weekdays" }
+	/** A month calendar to tick dates on, saved as "2026-10-05,2026-10-12". */
+	| { kind: "dates" };
 
 export type RecipeParamDefinition = {
 	label: string;

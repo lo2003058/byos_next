@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { datesFrom } from "@/lib/recipes/day-picker";
 import type { RecipeDefinition } from "@/lib/recipes/types";
 import {
 	DEFAULT_PROVINCE,
@@ -80,6 +81,11 @@ export const paramsSchema = z.object({
 			title: "End time",
 			input: { kind: "select", options: TIME_OPTIONS },
 		}),
+	daysOff: z
+		.string()
+		.default("")
+		.describe("Days you did not work, so this month's total stays right")
+		.meta({ title: "Days off this month", input: { kind: "dates" } }),
 	breakMinutes: z
 		.number()
 		.default(60)
@@ -165,6 +171,7 @@ export const definition: RecipeDefinition<
 			startMinutes,
 			endMinutes,
 			breakMinutes: Math.max(0, params.breakMinutes),
+			daysOff: datesFrom(params.daysOff),
 		};
 		const province = isProvince(params.province)
 			? params.province
