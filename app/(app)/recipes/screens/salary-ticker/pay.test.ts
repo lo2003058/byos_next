@@ -217,3 +217,55 @@ describe("hourlyRate", () => {
 		expect(hourlyRate({ ...base, breakMinutes: 600 }, wedNoon, TZ)).toBe(0);
 	});
 });
+
+describe("days off", () => {
+	// Wed 21 Oct 2026 is the "today" of wedNoon; the 1st and 2nd are Thu/Fri.
+	const off = (...days: string[]): PayConfig => ({ ...base, daysOff: days });
+
+	it("spreads a monthly salary over the remaining workdays", () => {
+		// 22 workdays less Thu 1 Oct leaves 21: 22000 / 21 a day.
+		const result = earnings(off("2026-10-01"), wedNoon, TZ);
+		const day = 22000 / 21;
+		expect(result.today).toBeCloseTo(day / 2, 2);
+		// Mon-Wed this week, all worked.
+		expect(result.week).toBeCloseTo(day * 2.5, 2);
+		// 14 workdays so far in Oct minus the day off, plus half of today.
+		expect(result.month).toBeCloseTo(day * (13 + 0.5), 2);
+	});
+
+	it("pays a daily rate only for days worked", () => {
+		const daily = {
+			...off("2026-10-01"),
+			payType: "daily" as const,
+			amount: 900,
+		};
+		expect(earnings(daily, wedNoon, TZ).month).toBe(13 * 900 + 450);
+	});
+
+	it("takes a day off out of this week", () => {
+		const daily = {
+			...off("2026-10-19"),
+			payType: "daily" as const,
+			amount: 900,
+		};
+		expect(earnings(daily, wedNoon, TZ).week).toBe(900 + 450);
+	});
+
+	it("pays nothing today when today is a day off", () => {
+		const result = earnings(off("2026-10-21"), wedNoon, TZ);
+		expect(result.today).toBe(0);
+		expect(workdayProgress(off("2026-10-21"), wedNoon, TZ).state).toBe("off");
+	});
+
+	it("ignores days off in other months", () => {
+		expect(earnings(off("2026-09-21"), wedNoon, TZ)).toEqual(
+			earnings(base, wedNoon, TZ),
+		);
+	});
+
+	it("ignores a day off that is not a workday anyway", () => {
+		expect(earnings(off("2026-10-24"), wedNoon, TZ)).toEqual(
+			earnings(base, wedNoon, TZ),
+		);
+	});
+});
