@@ -2,6 +2,7 @@
 import {
 	annualGross,
 	earnings,
+	hourlyRate,
 	type PayConfig,
 	parsePayType,
 	parseTime,
@@ -191,5 +192,28 @@ describe("annualGross", () => {
 		expect(annualGross({ ...base, payType: "hourly", amount: 100 })).toBe(
 			100 * 8 * 5 * 52,
 		);
+	});
+});
+
+describe("hourlyRate", () => {
+	it("spreads a monthly salary over the month's paid hours", () => {
+		// 22000 over 22 workdays of 8 paid hours.
+		expect(hourlyRate(base, wedNoon, TZ)).toBe(125);
+	});
+
+	it("is the pay itself for an hourly rate", () => {
+		expect(
+			hourlyRate({ ...base, payType: "hourly", amount: 100 }, wedNoon, TZ),
+		).toBe(100);
+	});
+
+	it("divides a daily rate by the paid hours", () => {
+		expect(
+			hourlyRate({ ...base, payType: "daily", amount: 900 }, wedNoon, TZ),
+		).toBe(112.5);
+	});
+
+	it("is zero when there are no paid hours", () => {
+		expect(hourlyRate({ ...base, breakMinutes: 600 }, wedNoon, TZ)).toBe(0);
 	});
 });

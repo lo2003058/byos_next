@@ -1,29 +1,11 @@
 import { z } from "zod";
-import {
-	ScreenCanvas,
-	screenFontSize,
-	screenMetric,
-} from "@/components/trmnl/screen-layout";
-import {
-	DEFAULT_IMAGE_HEIGHT,
-	DEFAULT_IMAGE_WIDTH,
-} from "@/lib/recipes/constants";
 import type { RecipeDefinition } from "@/lib/recipes/types";
-import {
-	createScreenProfile,
-	type ScreenProfile,
-} from "@/lib/trmnl/screen-profile";
-import { slotKind } from "@/lib/trmnl/slot-kind";
-import { PreSatori } from "@/utils/pre-satori";
-import { Dot } from "../year-progress/dot-grid";
-import { Text } from "../year-progress/ui";
 import {
 	DEFAULT_PROVINCE,
 	PROVINCE_OPTIONS,
 	type ProvinceCode,
 	takeHomeShare,
 } from "./canada-tax";
-import { formatMoney } from "./format";
 import {
 	CURRENCY_OPTIONS,
 	currencySymbol,
@@ -33,6 +15,7 @@ import {
 import {
 	annualGross,
 	earnings,
+	hourlyRate,
 	type PayConfig,
 	parsePayType,
 	parseTime,
@@ -40,12 +23,11 @@ import {
 	workdayProgress,
 	yearIn,
 } from "./pay";
+import SalaryView from "./salary-view";
 
 const DEFAULT_TIMEZONE = "America/Toronto";
 const DEFAULT_START = 9 * 60;
 const DEFAULT_END = 18 * 60;
-/** One dot for every half hour of the working day. */
-const DOT_MINUTES = 30;
 
 export const paramsSchema = z.object({
 	payType: z
@@ -119,6 +101,8 @@ export const dataSchema = z.object({
 	today: amountsSchema.default({ gross: 0, net: 0 }),
 	week: amountsSchema.default({ gross: 0, net: 0 }),
 	month: amountsSchema.default({ gross: 0, net: 0 }),
+	/** Pay per paid hour of work. */
+	hourly: amountsSchema.default({ gross: 0, net: 0 }),
 	updatedAt: z.string().default(""),
 	startTime: z.string().default("09:00"),
 	endTime: z.string().default("18:00"),
@@ -127,234 +111,9 @@ export const dataSchema = z.object({
 	minutesLeft: z.number().default(0),
 });
 
-type SalaryData = z.infer<typeof dataSchema>;
+export type SalaryData = z.infer<typeof dataSchema>;
 
-type Props = Partial<SalaryData> & {
-	width?: number;
-	height?: number;
-	screen?: ScreenProfile;
-};
-
-const NO_AMOUNTS = { gross: 0, net: 0 };
-
-/** "3h 20m" for a number of minutes. */
-export function formatDuration(minutes: number): string {
-	const hours = Math.floor(minutes / 60);
-	const rest = minutes % 60;
-	if (hours === 0) return `${rest}m`;
-	return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
-}
-
-function dayLine(
-	state: SalaryData["dayState"],
-	percent: number,
-	minutesLeft: number,
-	startTime: string,
-	endTime: string,
-): string {
-	switch (state) {
-		case "off":
-			return "Day off";
-		case "before":
-			return `Starts ${startTime} · off at ${endTime}`;
-		case "done":
-			return `Done for today · off at ${endTime}`;
-		default:
-			return `${percent}% · off at ${endTime} · ${formatDuration(minutesLeft)} left`;
-	}
-}
-
-/** One dot per half hour of the workday: done, the one under way, then to come. */
-function WorkdayDots({
-	count,
-	percent,
-	state,
-	width,
-}: {
-	count: number;
-	percent: number;
-	state: SalaryData["dayState"];
-	width: number;
-}) {
-	const gap = Math.max(3, Math.round(width / count / 8));
-	const size = Math.max(6, Math.floor((width - gap * (count - 1)) / count));
-	const finished =
-		state === "done" ? count : Math.floor((percent / 100) * count);
-	return (
-		<div style={{ display: "flex", flexDirection: "row", gap }}>
-			{Array.from({ length: count }, (_, index) => (
-				<Dot
-					key={index}
-					size={size}
-					state={
-						index < finished
-							? "done"
-							: index === finished && state === "working"
-								? "today"
-								: "future"
-					}
-				/>
-			))}
-		</div>
-	);
-}
-
-export default function SalaryTicker({
-	currency = "$",
-	provinceName = "",
-	takeHomePercent = 100,
-	payType = "monthly",
-	today = NO_AMOUNTS,
-	week = NO_AMOUNTS,
-	month = NO_AMOUNTS,
-	updatedAt = "",
-	startTime = "09:00",
-	endTime = "18:00",
-	dayState = "off",
-	dayPercent = 0,
-	minutesLeft = 0,
-	width = DEFAULT_IMAGE_WIDTH,
-	height = DEFAULT_IMAGE_HEIGHT,
-	screen,
-}: Props) {
-	const screenProfile = screen ?? createScreenProfile({ width, height });
-	const kind = slotKind(screenProfile);
-	const metric = (value: number) => screenMetric(screenProfile, value);
-	const font = (value: number, min = 14) =>
-		screenFontSize(screenProfile, value, min);
-	const padding = metric(kind === "full" ? 28 : 18);
-	const innerWidth = screenProfile.logicalWidth - padding * 2;
-	const compact = kind === "quarter" || kind === "banner";
-	const money = (value: number) => formatMoney(value, currency);
-	const dotCount = Math.min(
-		24,
-		Math.max(
-			1,
-			Math.ceil(
-				(parseTime(endTime, DEFAULT_END) -
-					parseTime(startTime, DEFAULT_START)) /
-					DOT_MINUTES,
-			),
-		),
-	);
-	const status = dayLine(dayState, dayPercent, minutesLeft, startTime, endTime);
-	const dots = (
-		<WorkdayDots
-			count={dotCount}
-			percent={dayPercent}
-			state={dayState}
-			width={innerWidth}
-		/>
-	);
-
-	const columnHeaders = (
-		<div style={{ display: "flex", flexDirection: "row" }}>
-			<div style={{ display: "flex", flex: 1 }} />
-			<Text size={font(18)} style={{ flex: 1 }}>
-				Before tax
-			</Text>
-			<Text size={font(18)} style={{ flex: 1 }}>
-				{`After tax (${takeHomePercent}%)`}
-			</Text>
-		</div>
-	);
-
-	const row = (
-		label: string,
-		amounts: { gross: number; net: number },
-		valueSize: number,
-	) => (
-		<div
-			key={label}
-			style={{
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "center",
-				borderTop: "2px solid #000",
-				paddingTop: metric(6),
-				paddingBottom: metric(6),
-			}}
-		>
-			<Text size={font(valueSize * 0.5, 18)} bold style={{ flex: 1 }}>
-				{label}
-			</Text>
-			<Text size={font(valueSize)} bold style={{ flex: 1 }}>
-				{money(amounts.gross)}
-			</Text>
-			<Text size={font(valueSize)} bold style={{ flex: 1 }}>
-				{money(amounts.net)}
-			</Text>
-		</div>
-	);
-
-	const body = compact ? (
-		<div
-			style={{
-				display: "flex",
-				flex: 1,
-				flexDirection: "column",
-				justifyContent: "center",
-				gap: metric(6),
-			}}
-		>
-			<Text size={font(18)}>{`Earned today · ${updatedAt}`}</Text>
-			<Text size={font(kind === "banner" ? 56 : 34)} bold>
-				{money(today.gross)}
-			</Text>
-			<Text size={font(kind === "banner" ? 30 : 22)}>
-				{`${money(today.net)} after tax`}
-			</Text>
-			{dots}
-			<Text size={font(kind === "banner" ? 22 : 16, 14)}>{status}</Text>
-		</div>
-	) : (
-		<div
-			style={{
-				display: "flex",
-				flex: 1,
-				flexDirection: "column",
-				justifyContent: "space-between",
-			}}
-		>
-			<div style={{ display: "flex", flexDirection: "column", gap: metric(8) }}>
-				<div
-					style={{
-						display: "flex",
-						flexDirection: "row",
-						justifyContent: "space-between",
-						alignItems: "flex-end",
-					}}
-				>
-					<Text size={font(30)} bold>
-						Earned so far
-					</Text>
-					<Text
-						size={font(18)}
-					>{`${payType} · ${provinceName} · ${updatedAt}`}</Text>
-				</div>
-				{dots}
-				<Text size={font(kind === "full" ? 24 : 20)} bold>
-					{status}
-				</Text>
-			</div>
-			<div style={{ display: "flex", flexDirection: "column" }}>
-				{columnHeaders}
-				{row("Today", today, kind === "full" ? 52 : 34)}
-				{row("This week", week, kind === "full" ? 38 : 28)}
-				{row("This month", month, kind === "full" ? 38 : 28)}
-			</div>
-		</div>
-	);
-
-	return (
-		<PreSatori
-			width={screenProfile.logicalWidth}
-			height={screenProfile.logicalHeight}
-		>
-			<ScreenCanvas screen={screenProfile}>{body}</ScreenCanvas>
-		</PreSatori>
-	);
-}
+export { default } from "./salary-view";
 
 function clockLabel(epochMs: number, timezone: string): string {
 	const format = (tz: string) =>
@@ -430,6 +189,7 @@ export const definition: RecipeDefinition<
 			today: both(gross.today),
 			week: both(gross.week),
 			month: both(gross.month),
+			hourly: both(hourlyRate(config, now, timezone)),
 			updatedAt: clockLabel(now, timezone),
 			startTime: params.startTime,
 			endTime: params.endTime,
@@ -439,6 +199,6 @@ export const definition: RecipeDefinition<
 		};
 	},
 	Component: ({ width, height, screen, data }) => (
-		<SalaryTicker {...data} width={width} height={height} screen={screen} />
+		<SalaryView {...data} width={width} height={height} screen={screen} />
 	),
 };

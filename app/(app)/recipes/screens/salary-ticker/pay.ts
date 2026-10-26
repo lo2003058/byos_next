@@ -210,3 +210,15 @@ export function annualGross(config: PayConfig): number {
 export function yearIn(epochMs: number, timezone: string): number {
 	return localNow(epochMs, timezone).year;
 }
+
+/** Gross pay per paid hour of work, in the month `epochMs` falls in. */
+export function hourlyRate(
+	config: PayConfig,
+	epochMs: number,
+	timezone: string,
+): number {
+	const hours = paidHours(config);
+	if (hours === 0) return 0;
+	const now = localNow(epochMs, timezone);
+	return dayPay(config, now.year, now.month) / hours;
+}

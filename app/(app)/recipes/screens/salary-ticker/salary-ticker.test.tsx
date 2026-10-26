@@ -6,7 +6,8 @@ jest.mock("@/utils/pre-satori", () => ({
 
 import { renderToStaticMarkup } from "react-dom/server";
 import { createScreenProfile } from "@/lib/trmnl/screen-profile";
-import SalaryTicker, { definition, formatDuration } from "./salary-ticker";
+import SalaryTicker, { definition } from "./salary-ticker";
+import { formatDuration } from "./workday";
 
 const data = {
 	currency: "$",
@@ -16,6 +17,7 @@ const data = {
 	today: { gross: 500, net: 390 },
 	week: { gross: 2500, net: 1950 },
 	month: { gross: 14500, net: 11310 },
+	hourly: { gross: 125, net: 97.5 },
 	updatedAt: "13:30",
 	startTime: "09:00",
 	endTime: "18:00",
@@ -40,12 +42,12 @@ describe("SalaryTicker", () => {
 		const html = renderToStaticMarkup(<SalaryTicker {...data} screen={full} />);
 		for (const text of [
 			"Before tax",
-			"After tax (78%)",
+			"After tax · keep 78%",
 			"$500",
 			"$390",
-			"$2,500",
+			"$2,500 before",
 			"$1,950",
-			"$14,500",
+			"$14,500 before",
 			"$11,310",
 		]) {
 			expect(html).toContain(text);
@@ -54,14 +56,30 @@ describe("SalaryTicker", () => {
 
 	it("shows how far through the day it is and when work ends", () => {
 		const html = renderToStaticMarkup(<SalaryTicker {...data} screen={full} />);
-		expect(html).toContain("50% · off at 18:00 · 4h 30m left");
+		expect(html).toContain("50%");
+		expect(html).toContain("Off at 18:00 · 4h 30m left");
 	});
 
 	it("draws one dot per half hour, with the right ones filled", () => {
 		const html = renderToStaticMarkup(<SalaryTicker {...data} screen={full} />);
 		// 09:00-18:00 is 18 dots; half way means 9 done, 1 under way, 8 to come.
 		expect(html.match(/data-today="true"/g)).toHaveLength(1);
-		expect(html.match(/background-color:#000/g)).toHaveLength(9);
+		expect(html.match(/background-color:#000;border:none/g)).toHaveLength(9);
+	});
+
+	it("shows what you earn each second, minute and hour", () => {
+		const html = renderToStaticMarkup(<SalaryTicker {...data} screen={full} />);
+		// 97.50 an hour after tax, 125 before.
+		for (const text of [
+			"$0.0271",
+			"$0.0347",
+			"$1.63",
+			"$2.08",
+			"$97.50",
+			"$125",
+		]) {
+			expect(html).toContain(text);
+		}
 	});
 
 	it("says so on a day off", () => {
@@ -83,7 +101,7 @@ describe("SalaryTicker", () => {
 			/>,
 		);
 		expect(html).toContain("Done for today");
-		expect(html.match(/background-color:#000/g)).toHaveLength(18);
+		expect(html.match(/background-color:#000;border:none/g)).toHaveLength(18);
 	});
 
 	it("shows only today, with the dots, in a quarter slot", () => {
@@ -92,7 +110,7 @@ describe("SalaryTicker", () => {
 		);
 		expect(html).toContain("$500");
 		expect(html).toContain("$390 after tax");
-		expect(html).toContain("off at 18:00");
+		expect(html).toContain("Off at 18:00");
 		expect(html).not.toContain("This week");
 	});
 });
