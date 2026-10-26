@@ -85,7 +85,7 @@ export default function SalaryTicker({
 		</Text>
 	);
 
-	const box = (children: ReactNode, flex = 1, dark = false) => (
+	const box = (children: ReactNode, flex = 1, bold = false) => (
 		<div
 			style={{
 				display: "flex",
@@ -95,10 +95,10 @@ export default function SalaryTicker({
 				gap: metric(2),
 				minWidth: 0,
 				padding: `${metric(8)}px ${metric(14)}px`,
-				border: `${metric(2)}px solid #000`,
+				border: `${metric(bold ? 5 : 2)}px solid #000`,
 				borderRadius: metric(14),
-				backgroundColor: dark ? "#000" : "#fff",
-				color: dark ? "#fff" : "#000",
+				backgroundColor: "#fff",
+				color: "#000",
 			}}
 		>
 			{children}
