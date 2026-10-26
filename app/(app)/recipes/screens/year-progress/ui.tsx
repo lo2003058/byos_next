@@ -12,16 +12,19 @@ export function Text({
 	children,
 	size,
 	bold,
+	family,
 	style,
 }: {
 	children: ReactNode;
 	size: number;
 	bold?: boolean;
+	/** A loaded font to use instead of Inter, such as `notoEmoji`. */
+	family?: string;
 	style?: CSSProperties;
 }) {
 	return (
 		<div
-			className={bold ? "font-interBold" : "font-inter"}
+			className={family ? undefined : bold ? "font-interBold" : "font-inter"}
 			style={{
 				display: "flex",
 				fontSize: size,
@@ -29,7 +32,7 @@ export function Text({
 				whiteSpace: "nowrap",
 				overflow: "hidden",
 				...style,
-				fontFamily: bold ? BOLD : "inter",
+				fontFamily: family ?? (bold ? BOLD : "inter"),
 			}}
 		>
 			{children}

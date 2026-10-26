@@ -1,0 +1,1 @@
+Noto Emoji (https://fonts.google.com/noto/specimen/Noto+Emoji) is licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org). Copyright 2013 Google LLC. NotoEmoji-subset.ttf is a cut-down static (wght 500) instance of it.
