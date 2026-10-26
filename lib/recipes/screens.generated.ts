@@ -19,6 +19,8 @@ export const reactRecipeLoaders: Record<string, RecipeModuleLoader> = {
 		import(
 			"../../app/(app)/recipes/screens/responsive-example/responsive-example"
 		),
+	"salary-ticker": () =>
+		import("../../app/(app)/recipes/screens/salary-ticker/salary-ticker"),
 	"simple-text": () =>
 		import("../../app/(app)/recipes/screens/simple-text/simple-text"),
 	"ttc-arrivals": () =>
@@ -41,6 +43,7 @@ export const reactRecipeSlugs = [
 	"local-news",
 	"not-found",
 	"responsive-example",
+	"salary-ticker",
 	"simple-text",
 	"ttc-arrivals",
 	"weather",
