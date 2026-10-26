@@ -1,10 +1,12 @@
 /// <reference types="jest" />
 import {
+	annualGross,
 	earnings,
 	type PayConfig,
 	parsePayType,
 	parseTime,
 	parseWorkDays,
+	workdayProgress,
 } from "./pay";
 
 const TZ = "Asia/Hong_Kong";
@@ -136,5 +138,58 @@ describe("earnings", () => {
 			week: 0,
 			month: 0,
 		});
+	});
+});
+
+describe("workdayProgress", () => {
+	it("is halfway through the day at 13:30", () => {
+		expect(workdayProgress(base, wedNoon, TZ)).toEqual({
+			state: "working",
+			percent: 50,
+			minutesLeft: 270,
+		});
+	});
+
+	it("has not started before the start time", () => {
+		const early = Date.UTC(2026, 9, 21, 0, 0); // 08:00 HK
+		expect(workdayProgress(base, early, TZ)).toEqual({
+			state: "before",
+			percent: 0,
+			minutesLeft: 540,
+		});
+	});
+
+	it("is done after the end time", () => {
+		const late = Date.UTC(2026, 9, 21, 11, 0); // 19:00 HK
+		expect(workdayProgress(base, late, TZ)).toEqual({
+			state: "done",
+			percent: 100,
+			minutesLeft: 0,
+		});
+	});
+
+	it("is a day off on a non-workday", () => {
+		const sat = Date.UTC(2026, 9, 24, 5, 30);
+		expect(workdayProgress(base, sat, TZ)).toEqual({
+			state: "off",
+			percent: 0,
+			minutesLeft: 0,
+		});
+	});
+});
+
+describe("annualGross", () => {
+	it("scales each pay type to a year", () => {
+		expect(annualGross(base)).toBe(264000);
+		expect(annualGross({ ...base, payType: "annual", amount: 90000 })).toBe(
+			90000,
+		);
+		expect(annualGross({ ...base, payType: "daily", amount: 900 })).toBe(
+			900 * 5 * 52,
+		);
+		// 8 paid hours a day, 5 days a week.
+		expect(annualGross({ ...base, payType: "hourly", amount: 100 })).toBe(
+			100 * 8 * 5 * 52,
+		);
 	});
 });
