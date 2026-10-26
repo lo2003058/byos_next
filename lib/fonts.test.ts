@@ -25,4 +25,10 @@ describe("loadFont", () => {
 		expect(fonts?.interBold).toBeInstanceOf(Buffer);
 		expect(fonts?.interBold.length).toBeGreaterThan(100_000);
 	});
+
+	it("ships a monochrome emoji font with the crying face", () => {
+		const fonts = loadFont();
+		expect(fonts?.notoEmoji).toBeInstanceOf(Buffer);
+		expect(fonts?.notoEmoji.length).toBeGreaterThan(1_000);
+	});
 });

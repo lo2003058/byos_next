@@ -103,7 +103,7 @@ describe("SalaryTicker", () => {
 				<SalaryTicker {...data} {...done} screen={screen} />,
 			);
 			expect(html).toContain("Congratulations");
-			expect(html).toContain("Crying face");
+			expect(html).toContain("😭");
 			expect(html).not.toContain("Off at");
 		});
 
@@ -119,7 +119,7 @@ describe("SalaryTicker", () => {
 				<SalaryTicker {...data} screen={full} />,
 			);
 			expect(html).not.toContain("Congratulations");
-			expect(html).not.toContain("Crying face");
+			expect(html).not.toContain("😭");
 		});
 	});
 

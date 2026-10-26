@@ -10,6 +10,13 @@ const fontPaths = {
 	inter: path.join(process.cwd(), "public", "fonts", "Inter_18pt-Regular.ttf"),
 	// Real bold cut: synthesized bold from the regular file blurs on 1-bit screens.
 	interBold: path.join(process.cwd(), "public", "fonts", "Inter-Bold.ttf"),
+	// Noto Emoji (OFL), cut down to a few glyphs. Monochrome, so it suits e-paper.
+	notoEmoji: path.join(
+		process.cwd(),
+		"public",
+		"fonts",
+		"NotoEmoji-subset.ttf",
+	),
 };
 
 // System fonts configuration
