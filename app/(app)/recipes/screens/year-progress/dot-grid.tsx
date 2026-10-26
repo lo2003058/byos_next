@@ -6,7 +6,7 @@ import { Text } from "./ui";
 const MAX_DAYS_IN_MONTH = 31;
 const MONTHS = 12;
 
-function Dot({
+export function Dot({
 	size,
 	state,
 }: {

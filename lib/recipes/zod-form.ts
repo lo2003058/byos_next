@@ -9,9 +9,21 @@ import { z } from "zod";
  */
 export type RecipeParamType = "string" | "number" | "boolean";
 
+export type RecipeParamOption = { value: string; label: string };
+
+/**
+ * How a string param is edited. Without one it is a plain text box. The
+ * saved value stays a string either way.
+ */
+export type RecipeParamInput =
+	| { kind: "select"; options: RecipeParamOption[] }
+	/** Day checkboxes, saved as a list like "Mon,Tue,Wed". */
+	| { kind: "weekdays" };
+
 export type RecipeParamDefinition = {
 	label: string;
 	type: RecipeParamType;
+	input?: RecipeParamInput;
 	description?: string;
 	default?: unknown;
 	placeholder?: string;
@@ -22,6 +34,7 @@ export type RecipeParamDefinitions = Record<string, RecipeParamDefinition>;
 type FieldMeta = {
 	title?: string;
 	placeholder?: string;
+	input?: RecipeParamInput;
 };
 
 type ZodInternals = {
@@ -91,7 +104,7 @@ function readMeta(schema: z.ZodTypeAny): FieldMeta {
 		typeof schema.meta === "function"
 			? (schema.meta() as FieldMeta | undefined)
 			: undefined;
-	if (meta && (meta.title || meta.placeholder)) return meta;
+	if (meta && (meta.title || meta.placeholder || meta.input)) return meta;
 	const base = unwrapToBaseType(schema);
 	const baseMeta =
 		typeof base.meta === "function"
@@ -142,6 +155,9 @@ export function zodObjectToParamDefinitions(
 			...(defaultValue !== undefined ? { default: defaultValue } : {}),
 			...(meta.placeholder !== undefined
 				? { placeholder: meta.placeholder }
+				: {}),
+			...(meta.input !== undefined && type === "string"
+				? { input: meta.input }
 				: {}),
 		};
 	}

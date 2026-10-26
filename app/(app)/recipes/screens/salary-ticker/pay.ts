@@ -1,3 +1,5 @@
+import { WEEKDAYS, weekdaysFrom } from "@/lib/recipes/weekdays";
+
 export type PayType = "hourly" | "daily" | "monthly" | "annual";
 
 export type PayConfig = {
@@ -16,7 +18,6 @@ export type PayConfig = {
 export type Earnings = { today: number; week: number; month: number };
 
 const PAY_TYPES: readonly PayType[] = ["hourly", "daily", "monthly", "annual"];
-const DAY_NAMES = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 const DEFAULT_WORK_DAYS = [1, 2, 3, 4, 5];
 const DAY_MS = 86_400_000;
 
@@ -25,27 +26,12 @@ export function parsePayType(value: string): PayType {
 	return PAY_TYPES.find((type) => type === key) ?? "monthly";
 }
 
-function dayIndex(name: string): number {
-	return DAY_NAMES.indexOf(name.trim().toLowerCase().slice(0, 3));
-}
-
 /** "Mon-Fri", "Mon,Wed,Fri" or "Sat-Tue" into sorted weekday numbers. */
 export function parseWorkDays(value: string): number[] {
-	const days = new Set<number>();
-	for (const part of value.split(",")) {
-		const [from, to] = part.split("-").map(dayIndex);
-		if (from === undefined || from < 0) continue;
-		if (to === undefined) {
-			days.add(from);
-			continue;
-		}
-		if (to < 0) continue;
-		for (let day = from; ; day = (day + 1) % 7) {
-			days.add(day);
-			if (day === to) break;
-		}
-	}
-	return days.size === 0 ? DEFAULT_WORK_DAYS : [...days].sort((a, b) => a - b);
+	const days = weekdaysFrom(value).map(
+		(day) => (WEEKDAYS.indexOf(day) + 1) % 7,
+	);
+	return days.length === 0 ? DEFAULT_WORK_DAYS : days.sort((a, b) => a - b);
 }
 
 /** "9:30" into minutes after midnight, or `fallback` if it isn't a time. */
@@ -168,4 +154,59 @@ export function earnings(
 		if (at >= monthStartUtc) month += pay;
 	}
 	return { today: round2(today), week: round2(week), month: round2(month) };
+}
+
+export type WorkdayProgress = {
+	state: "off" | "before" | "working" | "done";
+	/** Share of the working day gone, whole percent. */
+	percent: number;
+	/** Minutes until the day ends, 0 once it has. */
+	minutesLeft: number;
+};
+
+/** Where `epochMs` falls in today's working day, in `timezone`. */
+export function workdayProgress(
+	config: PayConfig,
+	epochMs: number,
+	timezone: string,
+): WorkdayProgress {
+	const now = localNow(epochMs, timezone);
+	const weekday = new Date(
+		Date.UTC(now.year, now.month - 1, now.day),
+	).getUTCDay();
+	if (!config.workDays.includes(weekday)) {
+		return { state: "off", percent: 0, minutesLeft: 0 };
+	}
+	const share = elapsedShare(config, now.minutes);
+	const minutesLeft = Math.max(
+		0,
+		config.endMinutes - Math.max(now.minutes, config.startMinutes),
+	);
+	const state =
+		now.minutes < config.startMinutes
+			? "before"
+			: now.minutes >= config.endMinutes
+				? "done"
+				: "working";
+	return { state, percent: Math.round(share * 100), minutesLeft };
+}
+
+/** Gross pay over a full year of this job. */
+export function annualGross(config: PayConfig): number {
+	const days = config.workDays.length * 52;
+	switch (config.payType) {
+		case "annual":
+			return config.amount;
+		case "monthly":
+			return config.amount * 12;
+		case "daily":
+			return config.amount * days;
+		case "hourly":
+			return config.amount * paidHours(config) * days;
+	}
+}
+
+/** The calendar year in `timezone` at `epochMs`. */
+export function yearIn(epochMs: number, timezone: string): number {
+	return localNow(epochMs, timezone).year;
 }

@@ -6,7 +6,15 @@ import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { toggleWeekday, WEEKDAYS, weekdaysFrom } from "@/lib/recipes/weekdays";
 import type {
 	RecipeParamDefinition,
 	RecipeParamDefinitions,
@@ -50,6 +58,47 @@ const buildInitialState = (
 	return state;
 };
 
+const renderStringInput = (
+	key: string,
+	input: NonNullable<RecipeParamDefinition["input"]>,
+	value: unknown,
+	onChange: (key: string, value: unknown) => void,
+) => {
+	const text = typeof value === "string" ? value : "";
+	if (input.kind === "select") {
+		return (
+			<Select value={text} onValueChange={(next) => onChange(key, next)}>
+				<SelectTrigger id={key} className="w-full">
+					<SelectValue />
+				</SelectTrigger>
+				<SelectContent>
+					{input.options.map((option) => (
+						<SelectItem key={option.value} value={option.value}>
+							{option.label}
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
+		);
+	}
+	const picked = weekdaysFrom(text);
+	return (
+		<div className="flex flex-wrap gap-x-3 gap-y-1.5" id={key}>
+			{WEEKDAYS.map((day) => (
+				<label key={day} className="flex items-center gap-1.5 text-sm">
+					<input
+						type="checkbox"
+						className="h-4 w-4 accent-primary"
+						checked={picked.includes(day)}
+						onChange={() => onChange(key, toggleWeekday(text, day))}
+					/>
+					{day}
+				</label>
+			))}
+		</div>
+	);
+};
+
 const renderField = (
 	key: string,
 	definition: RecipeParamDefinition,
@@ -88,6 +137,9 @@ const renderField = (
 				/>
 			);
 		default:
+			if (definition.input) {
+				return renderStringInput(key, definition.input, value, onChange);
+			}
 			return (
 				<Input
 					type="text"
