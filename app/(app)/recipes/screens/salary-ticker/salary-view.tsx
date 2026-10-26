@@ -75,6 +75,26 @@ export default function SalaryTicker({
 	);
 	const status = dayLine(dayState, minutesLeft, startTime, endTime);
 	const percentText = dayState === "off" ? "—" : `${dayPercent}%`;
+	const finished = dayState === "done";
+
+	const congrats = (size: number) => (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "row",
+				alignItems: "center",
+				justifyContent: "center",
+				gap: metric(12),
+			}}
+		>
+			<Text size={font(size * 0.7)} bold style={{ lineHeight: 1 }}>
+				Congratulations
+			</Text>
+			<Text size={font(size * 0.7)} style={{ lineHeight: 1 }}>
+				😭
+			</Text>
+		</div>
+	);
 
 	const caption = (text: string, size = 16) => (
 		<Text
@@ -140,37 +160,40 @@ export default function SalaryTicker({
 		percentSize: number,
 		dotMax: number,
 		available = innerWidth,
-	) => (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "row",
-				alignItems: "center",
-				gap: metric(16),
-			}}
-		>
-			<Text size={font(percentSize)} bold style={{ lineHeight: 1 }}>
-				{percentText}
-			</Text>
+	) =>
+		finished ? (
+			congrats(percentSize)
+		) : (
 			<div
 				style={{
 					display: "flex",
-					flex: 1,
-					flexDirection: "column",
-					gap: metric(6),
+					flexDirection: "row",
+					alignItems: "center",
+					gap: metric(16),
 				}}
 			>
-				<WorkdayDots
-					count={dotCount}
-					percent={dayPercent}
-					state={dayState}
-					width={available - metric(percentSize * 2.4)}
-					maxSize={dotMax}
-				/>
-				<Text size={font(18)}>{status}</Text>
+				<Text size={font(percentSize)} bold style={{ lineHeight: 1 }}>
+					{percentText}
+				</Text>
+				<div
+					style={{
+						display: "flex",
+						flex: 1,
+						flexDirection: "column",
+						gap: metric(6),
+					}}
+				>
+					<WorkdayDots
+						count={dotCount}
+						percent={dayPercent}
+						state={dayState}
+						width={available - metric(percentSize * 2.4)}
+						maxSize={dotMax}
+					/>
+					<Text size={font(18)}>{status}</Text>
+				</div>
 			</div>
-		</div>
-	);
+		);
 
 	const period = (label: string, amounts: Amounts) =>
 		box(
@@ -309,14 +332,20 @@ export default function SalaryTicker({
 					{money(today.gross)}
 				</Text>
 				<Text size={font(22)}>{`${money(today.net)} after tax`}</Text>
-				<WorkdayDots
-					count={dotCount}
-					percent={dayPercent}
-					state={dayState}
-					width={innerWidth}
-					maxSize={14}
-				/>
-				<Text size={font(16)}>{`${percentText} · ${status}`}</Text>
+				{finished ? (
+					congrats(28)
+				) : (
+					<>
+						<WorkdayDots
+							count={dotCount}
+							percent={dayPercent}
+							state={dayState}
+							width={innerWidth}
+							maxSize={14}
+						/>
+						<Text size={font(16)}>{`${percentText} · ${status}`}</Text>
+					</>
+				)}
 			</div>
 		);
 	}

@@ -90,18 +90,37 @@ describe("SalaryTicker", () => {
 		expect(html).not.toContain('data-today="true"');
 	});
 
-	it("fills every dot once the day is done", () => {
-		const html = renderToStaticMarkup(
-			<SalaryTicker
-				{...data}
-				dayState="done"
-				dayPercent={100}
-				minutesLeft={0}
-				screen={full}
-			/>,
-		);
-		expect(html).toContain("Done for today");
-		expect(html.match(/background-color:#000;border:none/g)).toHaveLength(18);
+	describe("once the day is done", () => {
+		const done = { dayState: "done" as const, dayPercent: 100, minutesLeft: 0 };
+
+		it.each([
+			["full", full],
+			["half", createScreenProfile({ width: 480, height: 800 })],
+			["banner", createScreenProfile({ width: 800, height: 240 })],
+			["quarter", quarter],
+		])("congratulates you with a crying face in a %s slot", (_, screen) => {
+			const html = renderToStaticMarkup(
+				<SalaryTicker {...data} {...done} screen={screen} />,
+			);
+			expect(html).toContain("Congratulations");
+			expect(html).toContain("😭");
+			expect(html).not.toContain("Off at");
+		});
+
+		it("swaps the dots for the message", () => {
+			const html = renderToStaticMarkup(
+				<SalaryTicker {...data} {...done} screen={full} />,
+			);
+			expect(html.match(/background-color:#000;border:none/g)).toBeNull();
+		});
+
+		it("does not congratulate before 100%", () => {
+			const html = renderToStaticMarkup(
+				<SalaryTicker {...data} screen={full} />,
+			);
+			expect(html).not.toContain("Congratulations");
+			expect(html).not.toContain("😭");
+		});
 	});
 
 	it("shows only today, with the dots, in a quarter slot", () => {
