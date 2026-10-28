@@ -10,7 +10,10 @@ import DeviceEditForm from "@/components/device/device-edit-form";
 import DeviceView from "@/components/device/device-view";
 import DeviceLogsContainer from "@/components/device-logs/device-logs-container";
 import { Button } from "@/components/ui/button";
-import { UI_REFRESH_FALLBACK_SECONDS } from "@/lib/device/defaults";
+import {
+	parseRefreshSeconds,
+	UI_REFRESH_FALLBACK_SECONDS,
+} from "@/lib/device/defaults";
 import { changedFooterFields } from "@/lib/footer/config";
 import {
 	getPlaylistScreens,
@@ -126,7 +129,11 @@ export default function DeviceClientPage({
 				...editedDevice,
 				[parent]: {
 					...(editedDevice[parent as keyof Device] as Record<string, unknown>),
-					[child]: value,
+					// Keep the rate a number; a blank box stays blank until it is fixed.
+					[child]:
+						name === "refresh_schedule.default_refresh_rate"
+							? (parseRefreshSeconds(value) ?? "")
+							: value,
 				},
 			});
 		} else {
@@ -288,6 +295,19 @@ export default function DeviceClientPage({
 			setFriendlyIdError(
 				"Friendly ID must be exactly 6 uppercase alphanumeric characters.",
 			);
+			return;
+		}
+
+		if (
+			editedDevice.refresh_schedule &&
+			parseRefreshSeconds(
+				editedDevice.refresh_schedule.default_refresh_rate,
+			) === null
+		) {
+			toast.error("Invalid refresh rate", {
+				description:
+					"Default refresh rate must be a whole number of seconds above 0.",
+			});
 			return;
 		}
 
