@@ -626,7 +626,7 @@ export default function DeviceEditForm({
 									name="refresh_schedule.default_refresh_rate"
 									type="number"
 									value={
-										editedDevice?.refresh_schedule?.default_refresh_rate ||
+										editedDevice?.refresh_schedule?.default_refresh_rate ??
 										UI_REFRESH_FALLBACK_SECONDS
 									}
 									onChange={onInputChange}
